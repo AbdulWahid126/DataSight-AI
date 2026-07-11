@@ -1,7 +1,16 @@
+/**
+ * UI Helper — Enhanced with deduplication and improved toast management
+ */
 class UI {
+    static _activeMessages = new Set();
+
     static showAlert(message, type = 'info') {
         const container = document.getElementById('flash-container');
         if (!container) return;
+
+        // Deduplicate: never show the same message twice simultaneously
+        if (UI._activeMessages.has(message)) return;
+        UI._activeMessages.add(message);
 
         const alertId = 'alert-' + Date.now();
         
@@ -45,12 +54,18 @@ class UI {
         }, 10);
 
         // Auto remove after 5s
+        const dismissDelay = type === 'error' ? 7000 : 5000;
         setTimeout(() => {
             const el = document.getElementById(alertId);
             if(el) {
                 el.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => el.remove(), 300);
+                setTimeout(() => {
+                    el.remove();
+                    UI._activeMessages.delete(message);
+                }, 300);
+            } else {
+                UI._activeMessages.delete(message);
             }
-        }, 5000);
+        }, dismissDelay);
     }
 }

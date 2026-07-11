@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, request, jsonify, current_app
 from app.utils.file_handler import validate_upload
 from app.services.data_analysis import load_and_summarize_csv, get_active_dataset
@@ -5,6 +6,31 @@ from app.services.analysis_engine import IntelligentAnalyzer
 from app.services.question_engine import QuestionEngine
 from app.services.visualization_engine import VisualizationEngine
 api_bp = Blueprint('api', __name__)
+
+@api_bp.route('/load-sample', methods=['POST'])
+def load_sample():
+    """Load the bundled sample CSV dataset without requiring a file upload."""
+    try:
+        sample_path = os.path.join(current_app.static_folder, 'sample_data.csv')
+        if not os.path.exists(sample_path):
+            return jsonify({'success': False, 'message': 'Sample dataset not found.'}), 404
+
+        with open(sample_path, 'rb') as f:
+            success, summary_or_error, data = load_and_summarize_csv(f)
+
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Sample dataset loaded successfully.',
+                'summary': summary_or_error,
+                'preview': data['preview'],
+                'file_id': data['file_id'],
+                'filename': 'sample_sales_data.csv'
+            }), 200
+        else:
+            return jsonify({'success': False, 'message': summary_or_error}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error loading sample: {str(e)}'}), 500
 
 @api_bp.route('/upload', methods=['POST'])
 def upload_file():

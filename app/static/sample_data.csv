@@ -1,0 +1,21 @@
+Order ID,Product,Category,Sales,Profit,Quantity,City,Region,Customer,Date,Rating
+1001,Laptop Pro,Electronics,45200,9040,120,New York,East,Alice Johnson,2024-01-15,4.8
+1002,Samsung Galaxy,Electronics,32000,6400,200,Los Angeles,West,Bob Smith,2024-01-18,4.5
+1003,Ergonomic Desk,Furniture,12000,2400,80,Chicago,Central,Carol Davis,2024-01-20,4.2
+1004,Office Chair,Furniture,8500,1700,150,Houston,South,David Lee,2024-01-22,4.6
+1005,Ball-Point Pens,Office Supplies,500,100,1000,Phoenix,West,Eve Turner,2024-01-25,3.9
+1006,Spiral Notebook,Office Supplies,300,60,800,Philadelphia,East,Frank Wilson,2024-01-28,3.7
+1007,Dell Monitor,Electronics,15000,3000,90,San Antonio,South,Grace Hall,2024-02-01,4.7
+1008,Mechanical Keyboard,Electronics,4500,900,300,San Diego,West,Henry Brown,2024-02-03,4.4
+1009,HP Printer,Electronics,7800,1560,60,Dallas,South,Iris Clark,2024-02-05,4.1
+1010,Standing Desk,Furniture,18000,3600,45,Seattle,West,James White,2024-02-08,4.9
+1011,File Cabinet,Furniture,3200,640,70,Boston,East,Katie Adams,2024-02-10,3.8
+1012,Whiteboard,Office Supplies,950,190,200,Denver,West,Leo Martin,2024-02-12,4.0
+1013,iPad Air,Electronics,28000,5600,180,Miami,South,Mia Thompson,2024-02-15,4.6
+1014,Bookshelf,Furniture,5600,1120,60,Atlanta,South,Nora Jackson,2024-02-18,4.3
+1015,Sticky Notes,Office Supplies,150,30,2000,Portland,West,Oscar Garcia,2024-02-20,3.5
+1016,MacBook Air,Electronics,55000,11000,100,San Francisco,West,Paula Martinez,2024-02-22,4.9
+1017,Conference Table,Furniture,22000,4400,20,Austin,South,Quinn Robinson,2024-02-25,4.7
+1018,Paper Ream,Office Supplies,80,16,5000,Minneapolis,Central,Rachel Lewis,2024-02-28,3.6
+1019,Webcam HD,Electronics,3200,640,250,Las Vegas,West,Steve Walker,2024-03-01,4.2
+1020,Desk Lamp,Office Supplies,480,96,400,Nashville,South,Tina Young,2024-03-03,4.1

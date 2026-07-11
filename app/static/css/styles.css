@@ -1,5 +1,19 @@
 /* Custom Utilities & Overrides */
 
+/* =====================================================
+   THEME TRANSITIONS — applies to every element
+   ===================================================== */
+*, *::before, *::after {
+    transition: background-color 0.25s ease, color 0.2s ease,
+                border-color 0.25s ease, box-shadow 0.25s ease;
+}
+/* But do NOT slow down animations that need to be fast */
+button, a, input, label {
+    transition: background-color 0.15s ease, color 0.15s ease,
+                border-color 0.15s ease, opacity 0.15s ease,
+                transform 0.15s ease, box-shadow 0.15s ease;
+}
+
 /* Glassmorphism Navigation */
 .glass-nav {
     background: rgba(15, 23, 42, 0.7);
@@ -59,4 +73,242 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-image: linear-gradient(to right, #3b82f6, #06b6d4);
+}
+
+/* =====================================================
+   SMOOTH ANIMATIONS
+   ===================================================== */
+
+/* Page Fade-In */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Slide-Up for cards / panels */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scale-In for modals / badges */
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* Pulse glow for active indicators */
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(56,189,248,0); }
+    50%       { box-shadow: 0 0 12px 3px rgba(56,189,248,0.25); }
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+/* Apply page-level fade-in to main content */
+main > * {
+    animation: fadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Glass cards stagger on load */
+.glass-card {
+    animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Stat number pop */
+#val-rows, #val-cols, #val-missing, #val-numeric, #val-categorical, #val-size {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+/* Upload zone pulse on drag */
+.drag-active {
+    border-color: #3b82f6 !important;
+    background-color: rgba(59, 130, 246, 0.05) !important;
+    animation: pulseGlow 1.2s ease-in-out infinite;
+}
+
+/* Button tap micro-interaction */
+button {
+    transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+button:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+/* Chat bubbles slide-in */
+#chat-history-area > div {
+    animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* History cards stagger */
+#history-grid > div:nth-child(1) { animation-delay: 0.05s; }
+#history-grid > div:nth-child(2) { animation-delay: 0.10s; }
+#history-grid > div:nth-child(3) { animation-delay: 0.15s; }
+#history-grid > div:nth-child(4) { animation-delay: 0.20s; }
+#history-grid > div:nth-child(5) { animation-delay: 0.25s; }
+#history-grid > div:nth-child(6) { animation-delay: 0.30s; }
+
+/* Settings sections stagger */
+.settings-section {
+    animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* About page timeline items */
+.about-step {
+    animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Skeleton loader */
+.skeleton {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 6px;
+}
+
+/* Chart container fade-in */
+#generated-chart-img {
+    animation: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Toast slide already handled via Tailwind transform utilities */
+
+/* Visualization section smooth show/hide */
+#chart-info {
+    animation: fadeIn 0.3s ease both;
+}
+
+/* =====================================================
+   LIGHT THEME OVERRIDES
+   ===================================================== */
+
+html.light body {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+/* Navbar */
+html.light .glass-nav {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: #e2e8f0;
+}
+
+html.light nav a {
+    color: #475569;
+}
+html.light nav a:hover,
+html.light nav a.text-white {
+    color: #0f172a;
+}
+
+/* Glass cards */
+html.light .glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+html.light .glass-card:hover {
+    box-shadow: 0 6px 24px rgba(59, 130, 246, 0.1);
+}
+
+/* Text overrides */
+html.light .text-slate-200 { color: #0f172a; }
+html.light .text-slate-300 { color: #334155; }
+html.light .text-slate-400 { color: #64748b; }
+html.light .text-slate-500 { color: #94a3b8; }
+html.light .text-white     { color: #0f172a; }
+
+/* Background overrides */
+html.light .bg-dark-bg      { background-color: #f8fafc; }
+html.light .bg-dark-card    { background-color: #f1f5f9; }
+html.light .bg-dark-bg\/50  { background-color: rgba(248, 250, 252, 0.5); }
+html.light .bg-dark-bg\/40  { background-color: rgba(248, 250, 252, 0.4); }
+html.light .bg-dark-bg\/60  { background-color: rgba(248, 250, 252, 0.6); }
+html.light .bg-dark-bg\/80  { background-color: rgba(248, 250, 252, 0.8); }
+html.light .bg-dark-card\/50 { background-color: rgba(241, 245, 249, 0.5); }
+html.light .bg-dark-card\/60 { background-color: rgba(241, 245, 249, 0.6); }
+
+/* Borders */
+html.light .border-dark-border   { border-color: #e2e8f0; }
+html.light .divide-dark-border > * { border-color: #e2e8f0; }
+
+/* Footer */
+html.light footer {
+    background-color: rgba(248, 250, 252, 0.9);
+    border-color: #e2e8f0;
+    color: #64748b;
+}
+
+/* Chat bubbles */
+html.light #chat-history-area {
+    background-color: #f8fafc;
+}
+html.light .bg-dark-bg\/80 {
+    background-color: rgba(241, 245, 249, 0.9);
+    color: #334155;
+}
+html.light .bg-primary\/20 {
+    background-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Tables */
+html.light table {
+    color: #0f172a;
+}
+html.light th {
+    color: #475569;
+    border-color: #e2e8f0;
+}
+html.light td {
+    border-color: #e2e8f0;
+}
+html.light tr:hover td {
+    background-color: rgba(241, 245, 249, 0.9);
+}
+
+/* Inputs */
+html.light input[type="text"],
+html.light input[type="email"],
+html.light input[type="password"],
+html.light textarea {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+html.light input::placeholder {
+    color: #94a3b8;
+}
+
+/* Mobile menu */
+html.light #mobile-menu {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+}
+
+/* Upload zone */
+html.light #upload-zone {
+    background-color: rgba(248, 250, 252, 0.7);
+    border-color: #cbd5e1;
+}
+
+/* Scrollbar */
+html.light ::-webkit-scrollbar-track { background: #f1f5f9; }
+html.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+html.light ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Modals (Settings danger zone) */
+html.light #danger-modal > div {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
 }

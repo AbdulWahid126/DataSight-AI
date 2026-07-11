@@ -7,6 +7,72 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadProgress = document.getElementById('upload-progress-container');
     const browseLabel = document.querySelector('label[for="csv-upload"]');
     
+    // ── View Sample Button ──────────────────────────────────────────────────
+    const btnViewSample = document.getElementById('btn-view-sample');
+    if (btnViewSample) {
+        btnViewSample.addEventListener('click', async () => {
+            btnViewSample.disabled = true;
+            const originalHtml = btnViewSample.innerHTML;
+            btnViewSample.innerHTML = '<i class="ph ph-spinner-gap animate-spin text-lg"></i> Loading...';
+            
+            try {
+                const response = await fetch('/api/load-sample', { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    window.currentFileId = result.file_id;
+                    updateDashboard(result.summary, result.preview);
+                    fileNameDisplay.textContent = result.filename || 'sample_sales_data.csv';
+                    filePreview.classList.remove('hidden');
+                    resetChartState();
+                    
+                    if (typeof SessionManager !== 'undefined') {
+                        SessionManager.saveDataset(result.file_id, result.filename || 'sample_sales_data.csv', result.summary.total_rows, result.summary.total_columns);
+                    }
+                    
+                    UI.showAlert('Sample dataset loaded successfully.', 'success');
+                    fetchAnalysis(result.file_id);
+                } else {
+                    UI.showAlert(result.message || 'Could not load sample dataset.', 'error');
+                }
+            } catch (e) {
+                UI.showAlert('Network error loading sample.', 'error');
+            } finally {
+                btnViewSample.disabled = false;
+                btnViewSample.innerHTML = originalHtml;
+            }
+        });
+    }
+    
+    // ── Upload New Button ───────────────────────────────────────────────────
+    const btnUploadNew = document.getElementById('btn-upload-new');
+    if (btnUploadNew) {
+        btnUploadNew.addEventListener('click', () => {
+            // Full state reset
+            window.currentFileId = null;
+            resetUploadUI();
+            resetChartState();
+            resetAnalysisUI();
+            
+            // Clear chat history, keep only the welcome message
+            const chatHistory = document.getElementById('chat-history-area');
+            if (chatHistory) {
+                // Remove everything except first child (welcome message)
+                while (chatHistory.children.length > 2) {
+                    chatHistory.removeChild(chatHistory.lastChild);
+                }
+            }
+            
+            // Open file picker
+            if (fileInput) {
+                fileInput.value = '';
+                fileInput.click();
+            }
+            UI.showAlert('Ready for new dataset. Select a CSV file.', 'info');
+        });
+    }
+
+    
     if (uploadZone && fileInput) {
         // Drag over
         uploadZone.addEventListener('dragover', (e) => {
@@ -79,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok && result.success) {
                 UI.showAlert(result.message, 'success');
                 updateDashboard(result.summary, result.preview);
+
                 // Store file_id globally for next phases
                 window.currentFileId = result.file_id;
                 
@@ -87,14 +154,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     SessionManager.saveDataset(result.file_id, file.name, result.summary.total_rows, result.summary.total_columns);
                 }
 
-                
                 // Phase 4: Trigger Intelligent Analysis
                 UI.showAlert('Analyzing dataset patterns...', 'info');
                 fetchAnalysis(result.file_id);
                 
-                // Phase 6: Unhide Generate Chart button
-                const btnGen = document.getElementById('btn-generate-chart');
-                if(btnGen) btnGen.classList.remove('hidden');
+                // Phase 6: Fully reset & re-enable Generate Chart button for this new dataset
+                resetChartState();
             } else {
                 UI.showAlert(result.message || 'Error processing file', 'error');
                 resetUploadUI();
@@ -110,9 +175,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetUploadUI() {
-        fileInput.value = '';
-        filePreview.classList.add('hidden');
-        fileNameDisplay.textContent = '';
+        if (fileInput) fileInput.value = '';
+        if (filePreview) filePreview.classList.add('hidden');
+        if (fileNameDisplay) fileNameDisplay.textContent = '';
+    }
+
+    function resetAnalysisUI() {
+        // Hide analysis panels and numeric stats
+        const numericSection = document.getElementById('numeric-stats-section');
+        const analysisPanels = document.getElementById('analysis-panels');
+        if (numericSection) numericSection.classList.add('hidden');
+        if (analysisPanels) analysisPanels.classList.add('hidden');
+        
+        // Reset summary cards
+        const cards = ['val-rows','val-cols','val-missing','val-numeric','val-categorical','val-size'];
+        cards.forEach(id => { const el = document.getElementById(id); if(el) el.textContent = '0'; });
+        
+        // Reset preview table
+        const thead = document.getElementById('preview-headers');
+        const tbody = document.getElementById('preview-body');
+        if (thead) thead.innerHTML = '';
+        if (tbody) tbody.innerHTML = '';
+    }
+
+    // Fully reset visualization state for a new upload
+    function resetChartState() {
+        const btnGen  = document.getElementById('btn-generate-chart');
+        const btnDown = document.getElementById('btn-download-chart');
+        const img     = document.getElementById('generated-chart-img');
+        const info    = document.getElementById('chart-info');
+        const bars    = document.getElementById('chart-placeholder-bars');
+        const loader  = document.getElementById('chart-loader');
+
+        if (btnGen) {
+            btnGen.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
+            btnGen.disabled = false;
+        }
+        if (btnDown)  { btnDown.classList.add('hidden'); btnDown.classList.remove('flex'); btnDown.href = '#'; }
+        if (img)      { img.classList.add('hidden'); img.src = ''; }
+        if (info)     { info.classList.add('hidden'); }
+        if (bars)     { bars.classList.remove('hidden'); }
+        if (loader)   { loader.classList.add('hidden'); }
     }
 
     function updateDashboard(summary, preview) {
@@ -478,8 +581,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Simulate initial system readiness
-    setTimeout(() => {
-        UI.showAlert('Ready for data! Upload a CSV file to begin analysis.', 'info');
-    }, 1000);
+    // Show startup notification ONLY once per browser session (not on every navigation)
+    if (!sessionStorage.getItem('ds_welcomed')) {
+        sessionStorage.setItem('ds_welcomed', '1');
+        setTimeout(() => {
+            UI.showAlert('Ready for data! Upload a CSV file to begin analysis.', 'info');
+        }, 800);
+    }
 });
