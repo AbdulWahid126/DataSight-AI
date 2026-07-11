@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | DataSight AI{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="mb-10 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-6">
+    <div>
+        <h1 class="text-4xl font-extrabold tracking-tight mb-2">
+            Unlock <span class="text-gradient">Data Insights</span> instantly.
+        </h1>
+        <p class="text-slate-400 text-lg max-w-2xl">
+            Upload your CSV dataset and let our AI assistant analyze, visualize, and answer your complex data questions in seconds.
+        </p>
+    </div>
+    <div class="hidden md:flex flex-shrink-0 gap-3">
+        <button class="bg-dark-card border border-dark-border hover:border-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+            <i class="ph ph-file-csv text-primary text-lg"></i> View Sample
+        </button>
+        <button class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-lg text-sm font-medium shadow-glass transition-all flex items-center gap-2">
+            <i class="ph ph-upload-simple text-lg"></i> Upload New
+        </button>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+    
+    <!-- Left Column: Data Management & Visualization (2/3 width on xl) -->
+    <div class="xl:col-span-2 flex flex-col gap-8">
+        
+        <!-- Upload Area (Drag & Drop) -->
+        <section class="glass-card rounded-2xl p-8 shadow-glass transition-all duration-300 hover:shadow-primary/10 border border-dashed border-dark-border hover:border-primary group" id="upload-zone">
+            <div class="flex flex-col items-center justify-center text-center">
+                <div class="w-16 h-16 rounded-full bg-dark-bg/50 border border-dark-border flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/10 group-hover:border-primary/30 transition-all duration-300">
+                    <i class="ph ph-cloud-arrow-up text-3xl text-primary"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Drag & Drop your dataset</h3>
+                <p class="text-slate-400 text-sm mb-6 max-w-md">
+                    Support for CSV files up to 25MB. Our system will automatically detect the schema and generate preliminary insights.
+                </p>
+                <div class="flex items-center gap-3">
+                    <label for="csv-upload" class="cursor-pointer bg-dark-bg hover:bg-dark-border border border-dark-border text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm">
+                        <i class="ph ph-folder-open text-accent"></i> Browse Files
+                    </label>
+                    <input type="file" id="csv-upload" class="hidden" accept=".csv">
+                </div>
+                <!-- Filename Preview (Hidden by default) -->
+                <div id="file-preview" class="mt-4 flex items-center gap-2 text-sm text-accent hidden bg-accent/10 px-4 py-2 rounded-lg border border-accent/20">
+                    <i class="ph ph-file-csv"></i>
+                    <span id="file-name" class="font-medium">dataset.csv</span>
+                    <button class="text-slate-400 hover:text-red-400 ml-2" title="Remove"><i class="ph ph-x"></i></button>
+                </div>
+            </div>
+            
+            <!-- Progress bar (Hidden by default) -->
+            <div id="upload-progress-container" class="mt-6 hidden">
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>Uploading and analyzing...</span>
+                    <span>45%</span>
+                </div>
+                <div class="w-full bg-dark-bg rounded-full h-2">
+                    <div class="bg-gradient-to-r from-primary to-accent h-2 rounded-full" style="width: 45%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dataset Summary Cards (Placeholder) -->
+        <section class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <!-- Card 1 -->
+            <div class="glass-card rounded-2xl p-5 hover:bg-dark-card transition-colors group">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-sm text-slate-400 font-medium">Total Rows</p>
+                    <i class="ph ph-rows text-primary/70 group-hover:text-primary"></i>
+                </div>
+                <h4 id="val-rows" class="text-2xl font-bold text-white">0</h4>
+            </div>
+            <!-- Card 2 -->
+            <div class="glass-card rounded-2xl p-5 hover:bg-dark-card transition-colors group">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-sm text-slate-400 font-medium">Total Columns</p>
+                    <i class="ph ph-columns text-accent/70 group-hover:text-accent"></i>
+                </div>
+                <h4 id="val-cols" class="text-2xl font-bold text-white">0</h4>
+            </div>
+            <!-- Card 3 -->
+            <div class="glass-card rounded-2xl p-5 hover:bg-dark-card transition-colors group">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-sm text-slate-400 font-medium">Missing Values</p>
+                    <i class="ph ph-warning-circle text-orange-400/70 group-hover:text-orange-400"></i>
+                </div>
+                <h4 id="val-missing" class="text-2xl font-bold text-white">0</h4>
+            </div>
+            <!-- Card 4 -->
+            <div class="glass-card rounded-2xl p-5 hover:bg-dark-card transition-colors group">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-sm text-slate-400 font-medium">Numeric</p>
+                    <i class="ph ph-hash text-emerald-400/70 group-hover:text-emerald-400"></i>
+                </div>
+                <h4 id="val-numeric" class="text-2xl font-bold text-white">0</h4>
+            </div>
+            <!-- Card 5 -->
+            <div class="glass-card rounded-2xl p-5 hover:bg-dark-card transition-colors group">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-sm text-slate-400 font-medium">Categorical</p>
+                    <i class="ph ph-text-aa text-purple-400/70 group-hover:text-purple-400"></i>
+                </div>
+                <h4 id="val-categorical" class="text-2xl font-bold text-white">0</h4>
+            </div>
+            <!-- Card 6 -->
+            <div class="glass-card rounded-2xl p-5 hover:bg-dark-card transition-colors group">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-sm text-slate-400 font-medium">Dataset Size</p>
+                    <i class="ph ph-database text-blue-400/70 group-hover:text-blue-400"></i>
+                </div>
+                <h4 id="val-size" class="text-2xl font-bold text-white">0 MB</h4>
+            </div>
+        </section>
+
+        <!-- Statistics Section / Data Preview -->
+        <section class="glass-card rounded-2xl border border-dark-border overflow-hidden">
+            <div class="p-5 border-b border-dark-border flex justify-between items-center bg-dark-bg/40">
+                <h3 class="font-semibold text-lg flex items-center gap-2"><i class="ph ph-table text-primary"></i> Data Preview</h3>
+                <span class="text-xs text-slate-400 bg-dark-border px-2 py-1 rounded-md">Showing top 10 rows</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-300">
+                    <thead id="preview-headers" class="text-xs text-slate-400 uppercase bg-dark-bg/60">
+                        <tr>
+                            <th class="px-6 py-3 font-medium">Please upload a dataset to view preview</th>
+                        </tr>
+                    </thead>
+                    <tbody id="preview-body" class="divide-y divide-dark-border">
+                        <!-- Rows will be injected here via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Phase 4: Numeric Statistics Table -->
+        <section id="numeric-stats-section" class="hidden glass-card rounded-2xl border border-dark-border overflow-hidden mb-8">
+            <div class="p-5 border-b border-dark-border bg-dark-bg/40">
+                <h3 class="font-semibold text-lg flex items-center gap-2"><i class="ph ph-math-operations text-primary"></i> Numeric Statistics</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-300">
+                    <thead class="text-xs text-slate-400 uppercase bg-dark-bg/60">
+                        <tr>
+                            <th class="px-6 py-3">Column</th>
+                            <th class="px-6 py-3">Mean</th>
+                            <th class="px-6 py-3">Median</th>
+                            <th class="px-6 py-3">Min</th>
+                            <th class="px-6 py-3">Max</th>
+                            <th class="px-6 py-3">Missing</th>
+                        </tr>
+                    </thead>
+                    <tbody id="numeric-stats-body" class="divide-y divide-dark-border">
+                        <!-- Numeric stats injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Phase 4: Intelligent Analysis Panels -->
+        <div id="analysis-panels" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Intelligent Insights Panel -->
+            <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass">
+                <h3 class="font-semibold text-lg flex items-center gap-2 mb-4 border-b border-dark-border pb-3">
+                    <i class="ph ph-lightbulb text-yellow-400"></i> Intelligent Insights
+                </h3>
+                <ul id="insights-list" class="space-y-3 text-sm text-slate-300">
+                    <!-- Insights will be injected here -->
+                </ul>
+            </section>
+
+            <!-- Data Quality Report Panel -->
+            <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass">
+                <h3 class="font-semibold text-lg flex items-center gap-2 mb-4 border-b border-dark-border pb-3">
+                    <i class="ph ph-shield-check text-emerald-400"></i> Data Quality Report
+                </h3>
+                <div id="quality-report-container" class="space-y-4 text-sm text-slate-300">
+                    <!-- Quality Report will be injected here -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Chart Preview Section -->
+        <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass relative group overflow-hidden">
+            <div class="flex justify-between items-center mb-6 z-10 relative">
+                <h3 class="font-semibold text-lg flex items-center gap-2"><i class="ph ph-chart-bar text-accent"></i> Visualization</h3>
+                <div class="flex gap-2">
+                    <button id="btn-generate-chart" class="bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-1 shadow-primary-glow hidden">
+                        <i class="ph ph-magic-wand"></i> Generate Chart
+                    </button>
+                    <a id="btn-download-chart" href="#" download="chart.png" class="bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 px-3 py-1.5 rounded-lg text-sm transition-colors items-center gap-1 hidden">
+                        <i class="ph ph-download-simple"></i> Download
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Skeleton Loader for Chart (Visible while generating) -->
+            <div id="chart-loader" class="hidden absolute inset-0 z-20 bg-dark-card/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl">
+                <i class="ph ph-spinner-gap text-4xl text-primary animate-spin mb-3"></i>
+                <p class="text-sm text-slate-300">Generating visualization...</p>
+            </div>
+
+            <!-- Chart Placeholder Image -->
+            <div id="chart-container" class="w-full aspect-[21/9] bg-dark-bg/50 rounded-xl border border-dark-border flex flex-col items-center justify-center overflow-hidden relative">
+                <div id="chart-placeholder-bars" class="w-full h-full p-4 flex items-end justify-around gap-2 opacity-50 grayscale group-hover:grayscale-0 transition-all duration-700 absolute inset-0 z-0">
+                    <div class="w-1/12 bg-primary/80 rounded-t-sm h-[30%]"></div>
+                    <div class="w-1/12 bg-accent/80 rounded-t-sm h-[50%]"></div>
+                    <div class="w-1/12 bg-primary/80 rounded-t-sm h-[75%]"></div>
+                    <div class="w-1/12 bg-accent/80 rounded-t-sm h-[40%]"></div>
+                    <div class="w-1/12 bg-primary/80 rounded-t-sm h-[90%]"></div>
+                    <div class="w-1/12 bg-accent/80 rounded-t-sm h-[60%]"></div>
+                    <div class="w-1/12 bg-primary/80 rounded-t-sm h-[85%]"></div>
+                    <div class="w-1/12 bg-accent/80 rounded-t-sm h-[30%]"></div>
+                </div>
+                <img id="generated-chart-img" src="" alt="Generated Chart" class="w-full h-full object-contain hidden relative z-10 bg-[#0f172a]">
+            </div>
+            
+            <div id="chart-info" class="mt-4 p-4 rounded-xl bg-dark-bg/40 border border-dark-border hidden">
+                <div class="flex justify-between items-start mb-2">
+                    <span id="chart-type-badge" class="text-xs font-semibold px-2 py-1 bg-accent/20 text-accent rounded-md border border-accent/30">Chart Type</span>
+                    <span id="chart-timestamp" class="text-[10px] text-slate-500"></span>
+                </div>
+                <p id="chart-explanation" class="text-sm text-slate-300"></p>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Right Column: AI Assistant (1/3 width on xl) -->
+    <div class="xl:col-span-1 flex flex-col h-full max-h-[1200px]">
+        <section class="glass-card rounded-2xl border border-dark-border flex flex-col h-full shadow-glass overflow-hidden sticky top-24">
+            <!-- Chat Header -->
+            <div class="p-5 border-b border-dark-border bg-dark-bg/60 flex items-center gap-3 relative">
+                <div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50"></div>
+                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 relative z-10">
+                    <i class="ph ph-robot text-xl text-primary"></i>
+                </div>
+                <div class="relative z-10">
+                    <h3 class="font-semibold text-white">DataSight AI</h3>
+                    <p class="text-xs text-slate-400 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Online
+                    </p>
+                </div>
+            </div>
+
+            <!-- Chat History Area -->
+            <div class="flex-grow p-5 overflow-y-auto custom-scrollbar flex flex-col gap-4 min-h-[400px]">
+                
+                <!-- System Welcome Message -->
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-dark-border flex-shrink-0 flex items-center justify-center">
+                        <i class="ph ph-robot text-slate-300"></i>
+                    </div>
+                    <div class="bg-dark-bg/80 border border-dark-border rounded-2xl rounded-tl-sm p-4 text-sm text-slate-300 max-w-[90%]">
+                        <p class="mb-2">Hello! I'm your DataSight AI assistant.</p>
+                        <p>Upload a dataset and ask me anything about it. For example, you can ask for trends, correlations, or ask me to generate a specific chart.</p>
+                    </div>
+                </div>
+
+                <!-- User Message Placeholder -->
+                <div class="flex gap-3 flex-row-reverse">
+                    <div class="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center">
+                        <i class="ph ph-user text-white"></i>
+                    </div>
+                    <div class="bg-primary/20 border border-primary/30 rounded-2xl rounded-tr-sm p-3 text-sm text-white max-w-[90%]">
+                        Show me the total sales by category.
+                    </div>
+                </div>
+
+                <!-- AI Response Placeholder -->
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-dark-border flex-shrink-0 flex items-center justify-center mt-1">
+                        <i class="ph ph-robot text-slate-300"></i>
+                    </div>
+                    <div class="bg-dark-bg/80 border border-dark-border rounded-2xl rounded-tl-sm p-4 text-sm text-slate-300 max-w-[90%] shadow-sm">
+                        <p class="mb-3">Based on your dataset, here is the breakdown of total sales by category:</p>
+                        <ul class="list-disc pl-5 mb-3 text-white space-y-1">
+                            <li><span class="text-primary">Electronics:</span> $45,200 (Highest)</li>
+                            <li><span class="text-accent">Furniture:</span> $32,150</li>
+                            <li><span class="text-purple-400">Office Supplies:</span> $12,400</li>
+                        </ul>
+                        <p class="text-xs text-slate-400 mt-2"><i class="ph ph-info"></i> I've also generated a bar chart for this which you can see in the visualization panel.</p>
+                    </div>
+                </div>
+
+                <!-- AI Typing Indicator Placeholder (Hidden) -->
+                <div class="flex gap-3 hidden" id="typing-indicator">
+                    <div class="w-8 h-8 rounded-full bg-dark-border flex-shrink-0 flex items-center justify-center">
+                        <i class="ph ph-robot text-slate-300"></i>
+                    </div>
+                    <div class="bg-dark-bg/80 border border-dark-border rounded-2xl rounded-tl-sm p-4 text-sm max-w-[90%] flex items-center gap-1 h-10">
+                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
+                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
+                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- QA Suggestions -->
+            <div class="px-4 pb-3">
+                <p class="text-xs text-slate-400 mb-2 font-medium">Suggested Questions:</p>
+                <div class="flex flex-wrap gap-2">
+                    <button class="text-xs bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 hover:text-white px-3 py-1.5 rounded-full transition-colors truncate max-w-[90%] text-left">
+                        Which product generated highest sales?
+                    </button>
+                    <button class="text-xs bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 hover:text-white px-3 py-1.5 rounded-full transition-colors truncate max-w-[90%] text-left">
+                        Which city has maximum orders?
+                    </button>
+                    <button class="text-xs bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 hover:text-white px-3 py-1.5 rounded-full transition-colors truncate max-w-[90%] text-left">
+                        What is the average customer age?
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-4 border-t border-dark-border bg-dark-bg/40">
+                <form class="relative flex items-center">
+                    <input type="text" placeholder="Ask a question about your data..." class="w-full bg-dark-bg border border-dark-border focus:border-primary focus:ring-1 focus:ring-primary rounded-xl pl-4 pr-12 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all">
+                    <button type="button" class="absolute right-2 w-8 h-8 bg-primary hover:bg-primary-hover text-white rounded-lg flex items-center justify-center transition-colors">
+                        <i class="ph ph-paper-plane-right"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
