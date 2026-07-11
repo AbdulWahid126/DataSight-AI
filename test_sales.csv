@@ -1,0 +1,9 @@
+Product,Category,Sales,Profit,Quantity,City
+Laptop,Electronics,45200,9000,120,New York
+Phone,Electronics,32000,6400,200,Los Angeles
+Desk,Furniture,12000,2400,80,Chicago
+Chair,Furniture,8500,1700,150,Houston
+Pen,Office Supplies,500,100,1000,Phoenix
+Notebook,Office Supplies,300,60,800,Philadelphia
+Monitor,Electronics,15000,3000,90,San Antonio
+Keyboard,Electronics,4500,900,300,San Diego

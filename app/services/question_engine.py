@@ -61,7 +61,7 @@ class QuestionEngine:
         intent = self._extract_intent(question)
         cols = self._extract_columns(question)
         
-        if not cols and intent not in ['duplicate', 'count']:
+        if not cols and intent not in ['duplicate', 'count', 'missing']:
             suggested = [c for c in self.columns[:5]]
             return {
                 "success": False,
@@ -126,9 +126,13 @@ class QuestionEngine:
             conf = 95
             
         elif intent == 'missing':
-            col = cols[0]
-            val = self.df[col].isnull().sum()
-            ans = f"There are {val} missing values in {col}."
+            if cols:
+                col = cols[0]
+                val = self.df[col].isnull().sum()
+                ans = f"There are {val} missing values in {col}."
+            else:
+                val = self.df.isnull().sum().sum()
+                ans = f"There are {val} missing values in the dataset."
             conf = 95
             
         elif intent == 'most_frequent':

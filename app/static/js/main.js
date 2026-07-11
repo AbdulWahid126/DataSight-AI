@@ -161,10 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Chat UI interactions
-    const chatForm = document.querySelector('.xl\\:col-span-1 form');
-    const chatInput = chatForm?.querySelector('input[type="text"]');
-    const chatHistory = document.querySelector('.xl\\:col-span-1 .overflow-y-auto');
+    // Chat UI interactions — use IDs for reliable targeting
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatHistory = document.getElementById('chat-history-area');
     const typingIndicator = document.getElementById('typing-indicator');
 
     if (chatForm && chatInput) {
@@ -173,13 +173,14 @@ document.addEventListener('DOMContentLoaded', () => {
             handleChatSubmit();
         });
         
-        const submitBtn = chatForm.querySelector('button');
-        if (submitBtn && submitBtn.type === 'button') {
+        const submitBtn = chatForm.querySelector('button[type="button"]');
+        if (submitBtn) {
             submitBtn.addEventListener('click', handleChatSubmit);
         }
     }
 
     async function handleChatSubmit() {
+        if (!chatInput) return;
         const question = chatInput.value.trim();
         if (!question) return;
         
@@ -291,8 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // QA Suggestion Buttons Logic
-    // Target the suggestion buttons inside the right column chat section
-    const qaButtons = document.querySelectorAll('#flash-container ~ * button.text-left, .xl\:col-span-1 button.text-left');
     // More reliable: target all rounded-full suggestion buttons directly
     const suggestionButtons = document.querySelectorAll('button.rounded-full.text-left');
     suggestionButtons.forEach(btn => {
