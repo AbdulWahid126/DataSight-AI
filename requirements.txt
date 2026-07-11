@@ -1,9 +1,0 @@
-Flask
-pandas
-numpy
-matplotlib
-python-dotenv
-google-generativeai
-gunicorn
-werkzeug
-flask-cors
