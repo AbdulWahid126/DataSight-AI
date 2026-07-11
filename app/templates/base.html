@@ -69,21 +69,35 @@
                 <!-- Desktop Menu -->
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="#"
-                            class="bg-dark-card/50 text-white px-3 py-2 rounded-md text-sm font-medium border border-dark-border hover:border-primary transition-colors">Dashboard</a>
-                        <a href="#"
-                            class="text-slate-300 hover:text-white hover:bg-dark-card px-3 py-2 rounded-md text-sm font-medium transition-colors">History</a>
-                        <a href="#"
-                            class="text-slate-300 hover:text-white hover:bg-dark-card px-3 py-2 rounded-md text-sm font-medium transition-colors">Settings</a>
+                        {% set endpoint = request.endpoint %}
+                        <a href="{{ url_for('views.index') }}"
+                            class="{% if endpoint == 'views.index' %}bg-dark-card/50 text-white border border-dark-border{% else %}text-slate-300 hover:text-white hover:bg-dark-card border border-transparent{% endif %} px-3 py-2 rounded-md text-sm font-medium transition-colors">Dashboard</a>
+                        <a href="{{ url_for('views.history') }}"
+                            class="{% if endpoint == 'views.history' %}bg-dark-card/50 text-white border border-dark-border{% else %}text-slate-300 hover:text-white hover:bg-dark-card border border-transparent{% endif %} px-3 py-2 rounded-md text-sm font-medium transition-colors">History</a>
+                        <a href="{{ url_for('views.settings') }}"
+                            class="{% if endpoint == 'views.settings' %}bg-dark-card/50 text-white border border-dark-border{% else %}text-slate-300 hover:text-white hover:bg-dark-card border border-transparent{% endif %} px-3 py-2 rounded-md text-sm font-medium transition-colors">Settings</a>
+                        <a href="{{ url_for('views.about') }}"
+                            class="{% if endpoint == 'views.about' %}bg-dark-card/50 text-white border border-dark-border{% else %}text-slate-300 hover:text-white hover:bg-dark-card border border-transparent{% endif %} px-3 py-2 rounded-md text-sm font-medium transition-colors">About</a>
                     </div>
                 </div>
 
                 <!-- Mobile menu button -->
                 <div class="md:hidden flex items-center">
-                    <button class="text-slate-300 hover:text-white focus:outline-none">
+                    <button id="mobile-menu-btn" class="text-slate-300 hover:text-white focus:outline-none">
                         <i class="ph ph-list text-2xl"></i>
                     </button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="md:hidden hidden bg-dark-bg border-b border-dark-border pb-3 px-4 shadow-lg absolute w-full left-0 top-16" id="mobile-menu">
+            <div class="flex flex-col space-y-2 mt-2">
+                {% set endpoint = request.endpoint %}
+                <a href="{{ url_for('views.index') }}" class="{% if endpoint == 'views.index' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">Dashboard</a>
+                <a href="{{ url_for('views.history') }}" class="{% if endpoint == 'views.history' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">History</a>
+                <a href="{{ url_for('views.settings') }}" class="{% if endpoint == 'views.settings' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">Settings</a>
+                <a href="{{ url_for('views.about') }}" class="{% if endpoint == 'views.about' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">About</a>
             </div>
         </div>
     </nav>
@@ -112,9 +126,21 @@
     </footer>
 
     <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/session.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}?v=1.1"></script>
+    <script>
+        // Mobile Menu Toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+            } else {
+                menu.classList.add('hidden');
+            }
+        });
+    </script>
 </body>
 
 </html>

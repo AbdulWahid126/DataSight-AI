@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - DataSight AI{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
+                <i class="ph ph-gear text-primary"></i>
+            </div>
+            Settings
+        </h1>
+        <p class="text-slate-400 mt-2">Manage your application preferences and configuration.</p>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Application Settings -->
+        <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass">
+            <h3 class="font-semibold text-lg flex items-center gap-2 mb-6 border-b border-dark-border pb-3">
+                <i class="ph ph-sliders-horizontal text-accent"></i> Application Settings
+            </h3>
+            
+            <div class="space-y-6">
+                <!-- Theme -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white font-medium">Theme</p>
+                        <p class="text-sm text-slate-400">Toggle between dark and light mode (Placeholder)</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" checked disabled>
+                        <div class="w-11 h-6 bg-dark-bg border border-dark-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary after:border-primary after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-dark-card opacity-70"></div>
+                    </label>
+                </div>
+
+                <!-- Notifications -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white font-medium">In-App Notifications</p>
+                        <p class="text-sm text-slate-400">Show floating toast notifications for actions</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="setting-notifications" class="sr-only peer" onchange="toggleSetting('notifications')">
+                        <div class="w-11 h-6 bg-dark-bg border border-dark-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-white"></div>
+                    </label>
+                </div>
+
+                <!-- Auto Save -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white font-medium">Auto Save Session</p>
+                        <p class="text-sm text-slate-400">Automatically save uploaded datasets to History</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="setting-autoSave" class="sr-only peer" onchange="toggleSetting('autoSave')">
+                        <div class="w-11 h-6 bg-dark-bg border border-dark-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-white"></div>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project Info -->
+        <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass">
+            <h3 class="font-semibold text-lg flex items-center gap-2 mb-6 border-b border-dark-border pb-3">
+                <i class="ph ph-info text-emerald-400"></i> Project Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="bg-dark-bg/50 p-4 rounded-xl border border-dark-border">
+                    <p class="text-slate-400 mb-1">Application Name</p>
+                    <p class="text-white font-medium">DataSight AI</p>
+                </div>
+                <div class="bg-dark-bg/50 p-4 rounded-xl border border-dark-border">
+                    <p class="text-slate-400 mb-1">Version</p>
+                    <p class="text-white font-medium">v1.0.0 (Hackathon Release)</p>
+                </div>
+                <div class="bg-dark-bg/50 p-4 rounded-xl border border-dark-border">
+                    <p class="text-slate-400 mb-1">Flask Version</p>
+                    <p class="text-white font-medium">3.0.x</p>
+                </div>
+                <div class="bg-dark-bg/50 p-4 rounded-xl border border-dark-border">
+                    <p class="text-slate-400 mb-1">Python Version</p>
+                    <p class="text-white font-medium">3.10+</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Developer Info -->
+        <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass">
+            <h3 class="font-semibold text-lg flex items-center gap-2 mb-6 border-b border-dark-border pb-3">
+                <i class="ph ph-code text-purple-400"></i> Developer Information
+            </h3>
+            <div class="flex flex-col gap-2 text-sm">
+                <div class="flex justify-between items-center py-2 border-b border-dark-border/50">
+                    <span class="text-slate-400">Team Name</span>
+                    <span class="text-white font-medium">AI Hackers</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-dark-border/50">
+                    <span class="text-slate-400">Hackathon</span>
+                    <span class="text-white font-medium">SMIT AI Data Analysis Hackathon</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Danger Zone -->
+        <section class="glass-card rounded-2xl border border-red-500/30 p-6 shadow-[0_0_15px_rgba(239,68,68,0.1)] relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-2 h-full bg-red-500"></div>
+            <h3 class="font-semibold text-lg flex items-center gap-2 mb-6 border-b border-dark-border pb-3 text-red-400">
+                <i class="ph ph-warning-octagon"></i> Danger Zone
+            </h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between bg-dark-bg/50 p-4 rounded-xl border border-dark-border">
+                    <div>
+                        <p class="text-white font-medium">Clear History</p>
+                        <p class="text-sm text-slate-400">Permanently remove all dataset history records.</p>
+                    </div>
+                    <button onclick="showModal('clearHistory')" class="bg-dark-bg hover:bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-2 rounded-lg font-medium transition-colors text-sm">
+                        Clear History
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between bg-dark-bg/50 p-4 rounded-xl border border-dark-border">
+                    <div>
+                        <p class="text-white font-medium">Reset Application</p>
+                        <p class="text-sm text-slate-400">Clear all settings, history, and active sessions.</p>
+                    </div>
+                    <button onclick="showModal('resetApp')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm shadow-[0_0_10px_rgba(239,68,68,0.3)]">
+                        Reset Application
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="danger-modal" class="hidden fixed inset-0 z-[100] bg-dark-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-dark-card border border-dark-border rounded-2xl max-w-md w-full p-6 shadow-2xl scale-95 opacity-0 transition-all duration-200" id="danger-modal-content">
+        <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30 text-red-400 mb-4">
+            <i class="ph ph-warning text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2" id="modal-title">Confirm Action</h3>
+        <p class="text-slate-400 mb-6" id="modal-desc">Are you sure you want to proceed? This action cannot be undone.</p>
+        
+        <div class="flex justify-end gap-3">
+            <button onclick="closeModal()" class="px-4 py-2 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-dark-border transition-colors">
+                Cancel
+            </button>
+            <button id="modal-confirm-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentAction = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Load Settings
+    if (typeof SessionManager !== 'undefined') {
+        const settings = SessionManager.getSettings();
+        const notifyToggle = document.getElementById('setting-notifications');
+        const autoSaveToggle = document.getElementById('setting-autoSave');
+        
+        if(notifyToggle) notifyToggle.checked = settings.notifications !== false;
+        if(autoSaveToggle) autoSaveToggle.checked = settings.autoSave !== false;
+    }
+});
+
+function toggleSetting(key) {
+    if (typeof SessionManager !== 'undefined') {
+        const toggle = document.getElementById(`setting-${key}`);
+        if(toggle) {
+            SessionManager.saveSetting(key, toggle.checked);
+            UI.showAlert(`${key} preference updated.`, 'info');
+        }
+    }
+}
+
+function showModal(action) {
+    currentAction = action;
+    const modal = document.getElementById('danger-modal');
+    const modalContent = document.getElementById('danger-modal-content');
+    const title = document.getElementById('modal-title');
+    const desc = document.getElementById('modal-desc');
+    
+    if(action === 'clearHistory') {
+        title.innerText = 'Clear All History';
+        desc.innerText = 'Are you sure you want to delete all dataset analysis records from this browser?';
+    } else {
+        title.innerText = 'Reset Application';
+        desc.innerText = 'Are you sure you want to completely reset all settings and history?';
+    }
+    
+    modal.classList.remove('hidden');
+    // Trigger animation
+    setTimeout(() => {
+        modalContent.classList.remove('scale-95', 'opacity-0');
+        modalContent.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeModal() {
+    const modal = document.getElementById('danger-modal');
+    const modalContent = document.getElementById('danger-modal-content');
+    
+    modalContent.classList.remove('scale-100', 'opacity-100');
+    modalContent.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        currentAction = null;
+    }, 200);
+}
+
+document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+    if(!currentAction || typeof SessionManager === 'undefined') return;
+    
+    if(currentAction === 'clearHistory') {
+        SessionManager.clearHistory();
+        UI.showAlert('History cleared successfully.', 'success');
+    } else if (currentAction === 'resetApp') {
+        SessionManager.resetApplication();
+        UI.showAlert('Application reset successfully.', 'success');
+    }
+    closeModal();
+});
+</script>
+{% endblock %}

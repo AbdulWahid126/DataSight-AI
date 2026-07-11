@@ -82,6 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Store file_id globally for next phases
                 window.currentFileId = result.file_id;
                 
+                // Phase 7: Track in Session History
+                if (typeof SessionManager !== 'undefined') {
+                    SessionManager.saveDataset(result.file_id, file.name, result.summary.total_rows, result.summary.total_columns);
+                }
+
+                
                 // Phase 4: Trigger Intelligent Analysis
                 UI.showAlert('Analyzing dataset patterns...', 'info');
                 fetchAnalysis(result.file_id);
@@ -217,6 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 appendBotMessage(result.answer, result.confidence, result.suggestions);
+                // Track question in Session History
+                if (typeof SessionManager !== 'undefined') {
+                    SessionManager.incrementQuestions(window.currentFileId);
+                }
             } else {
                 appendBotMessage(result.answer || 'Error processing question.', 0);
             }
@@ -438,6 +448,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Hide generate button after generation
                         btnGenerateChart.classList.add('hidden');
                         
+                        // Track chart generation in Session History
+                        if (typeof SessionManager !== 'undefined') {
+                            SessionManager.incrementCharts(window.currentFileId);
+                        }
+
                         UI.showAlert('Visualization generated successfully!', 'success');
                     };
                     

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}About - DataSight AI{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto pb-12">
+    <!-- Header Section -->
+    <div class="mb-12 text-center">
+        <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[0_0_30px_rgba(56,189,248,0.3)] mb-6">
+            <i class="ph ph-chart-line-up text-white text-4xl"></i>
+        </div>
+        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 tracking-tight mb-4">
+            DataSight AI
+        </h1>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            An intelligent dataset analysis engine designed to instantly summarize, visualize, and answer natural language questions about your data.
+        </p>
+    </div>
+
+    <!-- How it Works -->
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+            <i class="ph ph-git-merge text-accent"></i> Application Workflow
+        </h2>
+        
+        <div class="relative">
+            <!-- Connecting Line -->
+            <div class="absolute left-8 top-8 bottom-8 w-0.5 bg-dark-border hidden md:block"></div>
+            
+            <div class="space-y-8">
+                <!-- Step 1 -->
+                <div class="relative flex flex-col md:flex-row gap-6 md:items-start group">
+                    <div class="w-16 h-16 rounded-full bg-dark-bg border border-dark-border flex items-center justify-center shrink-0 z-10 group-hover:border-primary group-hover:bg-primary/10 transition-colors">
+                        <i class="ph ph-upload-simple text-2xl text-slate-300 group-hover:text-primary transition-colors"></i>
+                    </div>
+                    <div class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass flex-grow">
+                        <h3 class="text-lg font-semibold text-white mb-2">1. Upload CSV</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Upload any standard tabular CSV dataset. The system securely loads your file into memory and validates its structure instantly.</p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative flex flex-col md:flex-row gap-6 md:items-start group">
+                    <div class="w-16 h-16 rounded-full bg-dark-bg border border-dark-border flex items-center justify-center shrink-0 z-10 group-hover:border-accent group-hover:bg-accent/10 transition-colors">
+                        <i class="ph ph-magnifying-glass text-2xl text-slate-300 group-hover:text-accent transition-colors"></i>
+                    </div>
+                    <div class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass flex-grow">
+                        <h3 class="text-lg font-semibold text-white mb-2">2. Analyze Dataset</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Our Pandas-powered engine immediately extracts total rows, missing values, column types, and highlights preliminary data quality issues.</p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative flex flex-col md:flex-row gap-6 md:items-start group">
+                    <div class="w-16 h-16 rounded-full bg-dark-bg border border-dark-border flex items-center justify-center shrink-0 z-10 group-hover:border-emerald-400 group-hover:bg-emerald-400/10 transition-colors">
+                        <i class="ph ph-chat-circle-text text-2xl text-slate-300 group-hover:text-emerald-400 transition-colors"></i>
+                    </div>
+                    <div class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass flex-grow">
+                        <h3 class="text-lg font-semibold text-white mb-2">3. Ask Questions</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Use natural language to query your data. The rule-based Question Engine translates phrases like "highest sales" into dataset operations instantly.</p>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="relative flex flex-col md:flex-row gap-6 md:items-start group">
+                    <div class="w-16 h-16 rounded-full bg-dark-bg border border-dark-border flex items-center justify-center shrink-0 z-10 group-hover:border-purple-400 group-hover:bg-purple-400/10 transition-colors">
+                        <i class="ph ph-chart-bar text-2xl text-slate-300 group-hover:text-purple-400 transition-colors"></i>
+                    </div>
+                    <div class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass flex-grow">
+                        <h3 class="text-lg font-semibold text-white mb-2">4. Generate Charts</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Automatically generate beautiful Matplotlib charts tailored to your data's distribution and your specific queries, without writing a single line of Python.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section>
+        <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+            <i class="ph ph-stack text-emerald-400"></i> Technologies Used
+        </h2>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Backend -->
+            <div class="bg-dark-bg/50 border border-dark-border rounded-xl p-5 flex flex-col items-center justify-center text-center group hover:bg-dark-card transition-colors">
+                <i class="ph ph-terminal-window text-4xl text-slate-400 group-hover:text-white transition-colors mb-3"></i>
+                <h4 class="font-medium text-white mb-1">Flask</h4>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Backend API</p>
+            </div>
+            
+            <div class="bg-dark-bg/50 border border-dark-border rounded-xl p-5 flex flex-col items-center justify-center text-center group hover:bg-dark-card transition-colors">
+                <i class="ph ph-table text-4xl text-slate-400 group-hover:text-white transition-colors mb-3"></i>
+                <h4 class="font-medium text-white mb-1">Pandas & NumPy</h4>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Data Engine</p>
+            </div>
+            
+            <div class="bg-dark-bg/50 border border-dark-border rounded-xl p-5 flex flex-col items-center justify-center text-center group hover:bg-dark-card transition-colors">
+                <i class="ph ph-chart-line text-4xl text-slate-400 group-hover:text-white transition-colors mb-3"></i>
+                <h4 class="font-medium text-white mb-1">Matplotlib</h4>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Visualization</p>
+            </div>
+            
+            <!-- Frontend -->
+            <div class="bg-dark-bg/50 border border-dark-border rounded-xl p-5 flex flex-col items-center justify-center text-center group hover:bg-dark-card transition-colors">
+                <i class="ph ph-file-code text-4xl text-slate-400 group-hover:text-white transition-colors mb-3"></i>
+                <h4 class="font-medium text-white mb-1">Vanilla JS</h4>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Frontend Logic</p>
+            </div>
+            
+            <div class="bg-dark-bg/50 border border-dark-border rounded-xl p-5 flex flex-col items-center justify-center text-center group hover:bg-dark-card transition-colors">
+                <i class="ph ph-paint-brush text-4xl text-slate-400 group-hover:text-white transition-colors mb-3"></i>
+                <h4 class="font-medium text-white mb-1">Tailwind CSS</h4>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Styling Engine</p>
+            </div>
+            
+            <div class="bg-dark-bg/50 border border-dark-border rounded-xl p-5 flex flex-col items-center justify-center text-center group hover:bg-dark-card transition-colors">
+                <i class="ph ph-browser text-4xl text-slate-400 group-hover:text-white transition-colors mb-3"></i>
+                <h4 class="font-medium text-white mb-1">HTML5 / CSS3</h4>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Structure</p>
+            </div>
+            
+            <!-- Future AI -->
+            <div class="bg-dark-bg/50 border border-dark-border rounded-xl p-5 flex flex-col items-center justify-center text-center group hover:border-primary/50 hover:bg-primary/5 transition-colors col-span-2 md:col-span-2">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="ph ph-sparkle text-3xl text-primary"></i>
+                    <h4 class="font-medium text-white">Google Gemini</h4>
+                </div>
+                <p class="text-xs text-slate-400">Reserved for Advanced AI Insights (Phase 7)</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
