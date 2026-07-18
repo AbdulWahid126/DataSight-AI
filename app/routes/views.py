@@ -17,3 +17,8 @@ def settings():
 @views_bp.route('/about')
 def about():
     return render_template('about.html')
+
+@views_bp.route('/ai-insights')
+def ai_insights():
+    return render_template('ai_insights.html')
+

@@ -5,14 +5,16 @@ import uuid
 # In-memory storage for active datasets
 # Dictionary mapping file_id to pandas DataFrame
 ACTIVE_DATASETS = {}
+ACTIVE_DATASET_NAMES = {}
 
-def load_and_summarize_csv(file_stream):
+def load_and_summarize_csv(file_stream, filename=None):
     """
     Reads a CSV stream into a pandas DataFrame, stores it in memory,
     and calculates summary statistics and a preview.
     
     Args:
         file_stream: The file stream from request.files['file'].stream
+        filename: Optional name of the file
         
     Returns:
         tuple: (success (bool), summary_or_error_message (dict/str), data (dict/None))
@@ -35,6 +37,8 @@ def load_and_summarize_csv(file_stream):
         
         # Store in memory cache
         ACTIVE_DATASETS[file_id] = df
+        ACTIVE_DATASET_NAMES[file_id] = filename or "dataset.csv"
+
         
         # 1. Calculate Dataset Summary
         numeric_cols = df.select_dtypes(include=[np.number]).columns
@@ -68,3 +72,8 @@ def load_and_summarize_csv(file_stream):
 def get_active_dataset(file_id):
     """Retrieves the active dataframe from memory by its ID."""
     return ACTIVE_DATASETS.get(file_id)
+
+def get_active_dataset_name(file_id):
+    """Retrieves the filename from memory by its ID."""
+    return ACTIVE_DATASET_NAMES.get(file_id, "dataset.csv")
+

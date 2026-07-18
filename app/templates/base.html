@@ -72,6 +72,8 @@
                         {% set endpoint = request.endpoint %}
                         <a href="{{ url_for('views.index') }}"
                             class="{% if endpoint == 'views.index' %}bg-dark-card/50 text-white border border-dark-border{% else %}text-slate-300 hover:text-white hover:bg-dark-card border border-transparent{% endif %} px-3 py-2 rounded-md text-sm font-medium transition-colors">Dashboard</a>
+                        <a href="{{ url_for('views.ai_insights') }}"
+                            class="{% if endpoint == 'views.ai_insights' %}bg-dark-card/50 text-white border border-dark-border{% else %}text-slate-300 hover:text-white hover:bg-dark-card border border-transparent{% endif %} px-3 py-2 rounded-md text-sm font-medium transition-colors">AI Insights</a>
                         <a href="{{ url_for('views.history') }}"
                             class="{% if endpoint == 'views.history' %}bg-dark-card/50 text-white border border-dark-border{% else %}text-slate-300 hover:text-white hover:bg-dark-card border border-transparent{% endif %} px-3 py-2 rounded-md text-sm font-medium transition-colors">History</a>
                         <a href="{{ url_for('views.settings') }}"
@@ -105,6 +107,7 @@
             <div class="flex flex-col space-y-2 mt-2">
                 {% set endpoint = request.endpoint %}
                 <a href="{{ url_for('views.index') }}" class="{% if endpoint == 'views.index' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">Dashboard</a>
+                <a href="{{ url_for('views.ai_insights') }}" class="{% if endpoint == 'views.ai_insights' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">AI Insights</a>
                 <a href="{{ url_for('views.history') }}" class="{% if endpoint == 'views.history' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">History</a>
                 <a href="{{ url_for('views.settings') }}" class="{% if endpoint == 'views.settings' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">Settings</a>
                 <a href="{{ url_for('views.about') }}" class="{% if endpoint == 'views.about' %}bg-dark-card/50 text-white{% else %}text-slate-300 hover:text-white hover:bg-dark-card{% endif %} px-3 py-2 rounded-md text-base font-medium">About</a>
@@ -123,24 +126,51 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-dark-border bg-dark-bg/80 py-6 mt-auto">
-        <div
-            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
-            <p>&copy; 2026 DataSight AI. All rights reserved.</p>
-            <div class="flex gap-4">
-                <a href="#" class="hover:text-primary transition-colors">Privacy Policy</a>
-                <a href="#" class="hover:text-primary transition-colors">Terms of Service</a>
-                <a href="#" class="hover:text-white transition-colors"><i class="ph ph-github-logo text-xl"></i></a>
+    <footer class="border-t border-dark-border bg-dark-bg/80 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
+
+            <!-- Row 1: Dataset status pill -->
+            <div id="footer-dataset-status" class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span class="flex items-center gap-1.5 bg-dark-card/60 border border-dark-border px-3 py-1.5 rounded-full">
+                    <i class="ph ph-database text-primary/70"></i>
+                    <span id="footer-file-name" class="font-medium text-slate-400">No dataset loaded</span>
+                </span>
+                <span id="footer-rows-pill" class="hidden items-center gap-1.5 bg-dark-card/60 border border-dark-border px-3 py-1.5 rounded-full">
+                    <i class="ph ph-rows text-emerald-400/70"></i>
+                    <span id="footer-rows" class="font-medium text-slate-400"></span> rows
+                </span>
+                <span id="footer-cols-pill" class="hidden items-center gap-1.5 bg-dark-card/60 border border-dark-border px-3 py-1.5 rounded-full">
+                    <i class="ph ph-columns text-accent/70"></i>
+                    <span id="footer-cols" class="font-medium text-slate-400"></span> cols
+                </span>
+                <span id="footer-time-pill" class="hidden items-center gap-1.5 bg-dark-card/60 border border-dark-border px-3 py-1.5 rounded-full">
+                    <i class="ph ph-clock text-slate-500"></i>
+                    <span id="footer-upload-time" class="text-slate-500"></span>
+                </span>
+            </div>
+
+            <!-- Row 2: Copyright + links + version -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 text-sm text-slate-500">
+                <p>&copy; 2026 DataSight AI &mdash; All rights reserved.</p>
+                <div class="flex items-center gap-4">
+                    <a href="#" class="hover:text-primary transition-colors text-xs">Privacy</a>
+                    <a href="#" class="hover:text-primary transition-colors text-xs">Terms</a>
+                    <a href="#" class="hover:text-white transition-colors"><i class="ph ph-github-logo text-lg"></i></a>
+                    <span class="text-xs text-slate-600 border border-dark-border px-2 py-0.5 rounded-full font-mono">
+                        v1.8.0 &bull; build 20260719
+                    </span>
+                </div>
             </div>
         </div>
     </footer>
 
     <!-- Scripts: theme.js MUST be first so theme is applied before render -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="{{ url_for('static', filename='js/theme.js') }}?v=1.0"></script>
     <script src="{{ url_for('static', filename='js/session.js') }}?v=1.1"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}?v=1.1"></script>
-    <script src="{{ url_for('static', filename='js/ui.js') }}?v=1.2"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=1.3"></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}?v=2.0"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=3.1"></script>
     <script>
         // Mobile Menu Toggle
         document.getElementById('mobile-menu-btn').addEventListener('click', function() {

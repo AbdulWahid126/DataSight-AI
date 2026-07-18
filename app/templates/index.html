@@ -13,10 +13,10 @@
         </p>
     </div>
     <div class="hidden md:flex flex-shrink-0 gap-3">
-        <button id="btn-view-sample" class="bg-dark-card border border-dark-border hover:border-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+        <button id="btn-view-sample" data-ripple class="bg-dark-card border border-dark-border hover:border-primary px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm flex items-center gap-2 hover:-translate-y-0.5">
             <i class="ph ph-file-csv text-primary text-lg"></i> View Sample
         </button>
-        <button id="btn-upload-new" class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-lg text-sm font-medium shadow-glass transition-all flex items-center gap-2">
+        <button id="btn-upload-new" data-ripple class="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-lg text-sm font-medium shadow-glass transition-all flex items-center gap-2 hover:-translate-y-0.5">
             <i class="ph ph-upload-simple text-lg"></i> Upload New
         </button>
     </div>
@@ -53,12 +53,15 @@
             
             <!-- Progress bar (Hidden by default) -->
             <div id="upload-progress-container" class="mt-6 hidden">
-                <div class="flex justify-between text-xs text-slate-400 mb-1">
-                    <span>Uploading and analyzing...</span>
-                    <span>45%</span>
+                <div class="flex justify-between text-xs text-slate-400 mb-2">
+                    <span class="flex items-center gap-2">
+                        <i class="ph ph-spinner-gap animate-spin text-primary text-sm"></i>
+                        Uploading and analyzing&hellip;
+                    </span>
                 </div>
-                <div class="w-full bg-dark-bg rounded-full h-2">
-                    <div class="bg-gradient-to-r from-primary to-accent h-2 rounded-full" style="width: 45%"></div>
+                <!-- Indeterminate animated bar -->
+                <div class="w-full bg-dark-bg rounded-full h-1.5 overflow-hidden">
+                    <div class="bg-gradient-to-r from-primary to-accent h-1.5 rounded-full progress-indeterminate"></div>
                 </div>
             </div>
         </section>
@@ -184,13 +187,18 @@
 
         <!-- Chart Preview Section -->
         <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass relative group overflow-hidden">
+            <!-- Visualization Controls -->
             <div class="flex justify-between items-center mb-6 z-10 relative">
                 <h3 class="font-semibold text-lg flex items-center gap-2"><i class="ph ph-chart-bar text-accent"></i> Visualization</h3>
                 <div class="flex gap-2">
-                    <button id="btn-generate-chart" class="bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-1 shadow-primary-glow hidden">
+                    <button id="btn-generate-chart" data-ripple
+                        class="bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg text-sm transition-all
+                               flex items-center gap-1.5 shadow-sm hover:-translate-y-0.5 hidden">
                         <i class="ph ph-magic-wand"></i> Generate Chart
                     </button>
-                    <a id="btn-download-chart" href="#" download="chart.png" class="bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 px-3 py-1.5 rounded-lg text-sm transition-colors items-center gap-1 hidden">
+                    <a id="btn-download-chart" href="#" download="chart.png"
+                        class="bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300
+                               px-3 py-1.5 rounded-lg text-sm transition-colors items-center gap-1 hidden">
                         <i class="ph ph-download-simple"></i> Download
                     </a>
                 </div>
@@ -248,70 +256,39 @@
             <!-- Chat History Area -->
             <div id="chat-history-area" class="flex-grow p-5 overflow-y-auto custom-scrollbar flex flex-col gap-4 min-h-[400px]">
                 
-                <!-- System Welcome Message -->
-                <div class="flex gap-3">
-                    <div class="w-8 h-8 rounded-full bg-dark-border flex-shrink-0 flex items-center justify-center">
-                        <i class="ph ph-robot text-slate-300"></i>
+                <!-- Chat Empty State (shown when no messages, hidden after first question) -->
+                <div id="chat-empty-state" class="flex flex-col items-center justify-center py-10 text-center">
+                    <div class="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 empty-state-icon">
+                        <i class="ph ph-chat-teardrop-dots text-3xl text-primary/60"></i>
                     </div>
-                    <div class="bg-dark-bg/80 border border-dark-border rounded-2xl rounded-tl-sm p-4 text-sm text-slate-300 max-w-[90%]">
-                        <p class="mb-2">Hello! I'm your DataSight AI assistant.</p>
-                        <p>Upload a dataset and ask me anything about it. For example, you can ask for trends, correlations, or ask me to generate a specific chart.</p>
-                    </div>
-                </div>
-
-                <!-- User Message Placeholder -->
-                <div class="flex gap-3 flex-row-reverse">
-                    <div class="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center">
-                        <i class="ph ph-user text-white"></i>
-                    </div>
-                    <div class="bg-primary/20 border border-primary/30 rounded-2xl rounded-tr-sm p-3 text-sm text-white max-w-[90%]">
-                        Show me the total sales by category.
-                    </div>
-                </div>
-
-                <!-- AI Response Placeholder -->
-                <div class="flex gap-3">
-                    <div class="w-8 h-8 rounded-full bg-dark-border flex-shrink-0 flex items-center justify-center mt-1">
-                        <i class="ph ph-robot text-slate-300"></i>
-                    </div>
-                    <div class="bg-dark-bg/80 border border-dark-border rounded-2xl rounded-tl-sm p-4 text-sm text-slate-300 max-w-[90%] shadow-sm">
-                        <p class="mb-3">Based on your dataset, here is the breakdown of total sales by category:</p>
-                        <ul class="list-disc pl-5 mb-3 text-white space-y-1">
-                            <li><span class="text-primary">Electronics:</span> $45,200 (Highest)</li>
-                            <li><span class="text-accent">Furniture:</span> $32,150</li>
-                            <li><span class="text-purple-400">Office Supplies:</span> $12,400</li>
-                        </ul>
-                        <p class="text-xs text-slate-400 mt-2"><i class="ph ph-info"></i> I've also generated a bar chart for this which you can see in the visualization panel.</p>
-                    </div>
+                    <p class="text-slate-400 text-sm font-medium mb-1">No messages yet</p>
+                    <p class="text-slate-500 text-xs max-w-[200px]">Upload a dataset and ask your first question below.</p>
                 </div>
 
                 <!-- AI Typing Indicator Placeholder (Hidden) -->
                 <div class="flex gap-3 hidden" id="typing-indicator">
-                    <div class="w-8 h-8 rounded-full bg-dark-border flex-shrink-0 flex items-center justify-center">
-                        <i class="ph ph-robot text-slate-300"></i>
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-dark-border to-slate-700 flex-shrink-0 flex items-center justify-center border border-dark-border mt-1">
+                        <i class="ph ph-robot text-accent"></i>
                     </div>
-                    <div class="bg-dark-bg/80 border border-dark-border rounded-2xl rounded-tl-sm p-4 text-sm max-w-[90%] flex items-center gap-1 h-10">
-                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
-                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
-                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
+                    <div class="bg-dark-bg/85 border border-dark-border rounded-2xl rounded-tl-sm p-3.5 text-sm text-slate-400 max-w-[80%] flex items-center gap-2.5 shadow-lg">
+                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-500">Thinking</span>
+                        <div class="flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 rounded-full bg-slate-400 typing-dot"></div>
+                            <div class="w-1.5 h-1.5 rounded-full bg-slate-400 typing-dot"></div>
+                            <div class="w-1.5 h-1.5 rounded-full bg-slate-400 typing-dot"></div>
+                        </div>
                     </div>
                 </div>
 
             </div>
 
             <!-- QA Suggestions -->
-            <div class="px-4 pb-3">
-                <p class="text-xs text-slate-400 mb-2 font-medium">Suggested Questions:</p>
-                <div class="flex flex-wrap gap-2">
-                    <button class="text-xs bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 hover:text-white px-3 py-1.5 rounded-full transition-colors truncate max-w-[90%] text-left">
-                        Which product generated highest sales?
-                    </button>
-                    <button class="text-xs bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 hover:text-white px-3 py-1.5 rounded-full transition-colors truncate max-w-[90%] text-left">
-                        Which city has maximum orders?
-                    </button>
-                    <button class="text-xs bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 hover:text-white px-3 py-1.5 rounded-full transition-colors truncate max-w-[90%] text-left">
-                        What is the average customer age?
-                    </button>
+            <div id="qa-suggestions-container" class="px-4 pb-3 hidden">
+                <p class="text-xs text-slate-400 mb-2 font-medium flex items-center gap-1">
+                    <i class="ph ph-lightbulb text-yellow-400"></i> Suggested Questions
+                </p>
+                <div id="qa-suggestions-chips" class="flex flex-wrap gap-2">
+                    <!-- Dynamic chips will be injected here -->
                 </div>
             </div>
 

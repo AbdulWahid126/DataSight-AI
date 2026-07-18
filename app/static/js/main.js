@@ -1,4 +1,228 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize currentFileId from sessionStorage
+    window.currentFileId = sessionStorage.getItem('currentFileId') || null;
+
+    // ── Request-in-flight guards (prevent duplicate requests) ────────────────
+    let isUploadProcessing = false;
+    let isChatProcessing   = false;
+    let isChartProcessing  = false;
+
+    // ── Footer status bar updater ────────────────────────────────────────────
+    function updateFooterStatus(fileName, rows, cols) {
+        const elName = document.getElementById('footer-file-name');
+        const elRows = document.getElementById('footer-rows');
+        const elCols = document.getElementById('footer-cols');
+        const elTime = document.getElementById('footer-upload-time');
+        const pillRows = document.getElementById('footer-rows-pill');
+        const pillCols = document.getElementById('footer-cols-pill');
+        const pillTime = document.getElementById('footer-time-pill');
+
+        if (elName && fileName) {
+            elName.textContent = fileName;
+            if (pillRows && rows) { elRows.textContent = Number(rows).toLocaleString(); pillRows.classList.remove('hidden'); pillRows.classList.add('flex'); }
+            if (pillCols && cols) { elCols.textContent = Number(cols).toLocaleString(); pillCols.classList.remove('hidden'); pillCols.classList.add('flex'); }
+            if (pillTime) {
+                const cached = sessionStorage.getItem('uploadTimestamp');
+                elTime.textContent = cached ? 'Uploaded ' + new Date(Number(cached)).toLocaleTimeString() : 'Just now';
+                pillTime.classList.remove('hidden');
+                pillTime.classList.add('flex');
+            }
+        }
+    }
+
+    // Restore footer from sessionStorage on every page load
+    const _sfn = sessionStorage.getItem('currentFileName');
+    const _srows = sessionStorage.getItem('currentFileRows');
+    const _scols = sessionStorage.getItem('currentFileCols');
+    if (_sfn) updateFooterStatus(_sfn, _srows, _scols);
+
+
+    // ── Session Restore Helpers ─────────────────────────────────────────────
+    function saveChatHistory() {
+        const chatHistory = document.getElementById('chat-history-area');
+        if (!chatHistory) return;
+        // Save innerHTML minus the typing indicator which has id
+        const clone = chatHistory.cloneNode(true);
+        const ti = clone.querySelector('#typing-indicator');
+        if (ti) ti.remove();
+        sessionStorage.setItem('chatHistory', clone.innerHTML);
+    }
+
+    function restoreChatHistory() {
+        const chatHistory = document.getElementById('chat-history-area');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const chatEmptyState  = document.getElementById('chat-empty-state');
+        if (!chatHistory) return;
+        const cached = sessionStorage.getItem('chatHistory');
+        if (!cached || cached.trim() === '') return;
+        // Insert cached messages before the typing indicator
+        const tmp = document.createElement('div');
+        tmp.innerHTML = cached;
+        // Clear existing children except typing indicator and empty state
+        Array.from(chatHistory.children).forEach(child => {
+            if (child.id !== 'typing-indicator' && child.id !== 'chat-empty-state') chatHistory.removeChild(child);
+        });
+        Array.from(tmp.children).forEach(child => {
+            if (typingIndicator) {
+                chatHistory.insertBefore(child, typingIndicator);
+            } else {
+                chatHistory.appendChild(child);
+            }
+        });
+        // Hide empty state if we have restored messages
+        if (chatEmptyState && tmp.children.length > 0) chatEmptyState.classList.add('hidden');
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function clearSessionAndResetUI() {
+        window.currentFileId = null;
+        // Clear all sessionStorage keys
+        const keysToClear = [
+            'currentFileId', 'currentFileName', 'currentFileRows', 'currentFileCols',
+            'dashboardSummary', 'dashboardPreview', 'dashboardAnalysis',
+            'chartPath', 'chartType', 'chartExplanation', 'chartTimestamp', 'chartTimestampLabel',
+            'chatHistory', 'aiInsightsResult', 'uploadTimestamp', 'suggestedQuestions'
+        ];
+        keysToClear.forEach(k => sessionStorage.removeItem(k));
+
+        // Hide suggested questions
+        populateSuggestedQuestions([]);
+
+        // Clear server session
+        fetch('/api/clear-session', { method: 'POST' }).catch(err => console.error(err));
+
+        resetUploadUI();
+        resetChartState();
+        resetAnalysisUI();
+
+        // Clear chat history, keep only the welcome message
+        const chatHistoryEl = document.getElementById('chat-history-area');
+        if (chatHistoryEl) {
+            Array.from(chatHistoryEl.children).forEach(child => {
+                if (child.id !== 'typing-indicator' && child.id !== 'chat-empty-state') {
+                    chatHistoryEl.removeChild(child);
+                }
+            });
+            const chatEmptyState = document.getElementById('chat-empty-state');
+            if (chatEmptyState) chatEmptyState.classList.remove('hidden');
+        }
+
+        // Hide chart buttons
+        const btnGen = document.getElementById('btn-generate-chart');
+        const btnDown = document.getElementById('btn-download-chart');
+        if (btnGen) btnGen.classList.add('hidden');
+        if (btnDown) {
+            btnDown.classList.add('hidden');
+            btnDown.classList.remove('flex');
+        }
+
+        // Update footer status
+        const elName = document.getElementById('footer-file-name');
+        const pillRows = document.getElementById('footer-rows-pill');
+        const pillCols = document.getElementById('footer-cols-pill');
+        const pillTime = document.getElementById('footer-time-pill');
+        if (elName) elName.textContent = 'No dataset loaded';
+        if (pillRows) pillRows.classList.add('hidden');
+        if (pillCols) pillCols.classList.add('hidden');
+        if (pillTime) pillTime.classList.add('hidden');
+    }
+
+    async function restoreDashboardFromSession() {
+        const fileId = sessionStorage.getItem('currentFileId');
+        if (!fileId) return;
+
+        try {
+            // Verify with server if the dataset is still active
+            const response = await fetch(`/api/dataset/${fileId}`);
+            if (!response.ok) {
+                clearSessionAndResetUI();
+                return;
+            }
+            const result = await response.json();
+            if (!result.success) {
+                clearSessionAndResetUI();
+                return;
+            }
+
+            const summaryRaw = sessionStorage.getItem('dashboardSummary');
+            const previewRaw = sessionStorage.getItem('dashboardPreview');
+            const analysisRaw = sessionStorage.getItem('dashboardAnalysis');
+            const chartPath = sessionStorage.getItem('chartPath');
+            const chartType = sessionStorage.getItem('chartType');
+            const chartExplanationText = sessionStorage.getItem('chartExplanation');
+            const fileName = sessionStorage.getItem('currentFileName');
+
+            // Restore file name badge
+            const fileNameDisplay = document.getElementById('file-name');
+            const filePreview = document.getElementById('file-preview');
+            if (fileNameDisplay && fileName) fileNameDisplay.textContent = fileName;
+            if (filePreview && summaryRaw) filePreview.classList.remove('hidden');
+
+            // Restore summary cards + preview table
+            if (summaryRaw && previewRaw) {
+                try {
+                    updateDashboard(JSON.parse(summaryRaw), JSON.parse(previewRaw));
+                } catch(e) { console.warn('Could not restore summary/preview', e); }
+            }
+
+            // Restore analysis panels
+            if (analysisRaw) {
+                try {
+                    populateAnalysisPanels(JSON.parse(analysisRaw));
+                } catch(e) { console.warn('Could not restore analysis', e); }
+            }
+
+            // Restore chart
+            if (chartPath && chartType && chartExplanationText) {
+                const img = document.getElementById('generated-chart-img');
+                const bars = document.getElementById('chart-placeholder-bars');
+                const chartInfoEl = document.getElementById('chart-info');
+                const chartTypeBadgeEl = document.getElementById('chart-type-badge');
+                const chartExplanationEl = document.getElementById('chart-explanation');
+                const chartTimestampEl = document.getElementById('chart-timestamp');
+                const btnGen = document.getElementById('btn-generate-chart');
+                const btnDown = document.getElementById('btn-download-chart');
+
+                if (img) {
+                    img.src = chartPath + '?t=' + (sessionStorage.getItem('chartTimestamp') || Date.now());
+                    img.classList.remove('hidden');
+                }
+                if (bars) bars.classList.add('hidden');
+                if (chartTypeBadgeEl) chartTypeBadgeEl.textContent = chartType;
+                if (chartExplanationEl) chartExplanationEl.textContent = chartExplanationText;
+                if (chartTimestampEl) chartTimestampEl.textContent = sessionStorage.getItem('chartTimestampLabel') || '';
+                if (chartInfoEl) chartInfoEl.classList.remove('hidden');
+                if (btnGen) btnGen.classList.add('hidden');
+                if (btnDown) {
+                    btnDown.href = chartPath;
+                    btnDown.classList.remove('hidden');
+                    btnDown.classList.add('flex');
+                }
+            }
+
+            // Restore chat history
+            restoreChatHistory();
+
+            // Restore suggested questions
+            const savedSuggestions = sessionStorage.getItem('suggestedQuestions');
+            if (savedSuggestions) {
+                try {
+                    populateSuggestedQuestions(JSON.parse(savedSuggestions));
+                } catch(e) { console.warn('Could not restore suggestions', e); }
+            }
+        } catch (err) {
+            console.error('Error verifying active dataset session:', err);
+            // Do not clear on network errors to prevent losing work due to simple flaky connection
+        }
+    }
+
+    // Run dashboard restoration immediately on page load
+    restoreDashboardFromSession();
+
+    // ── Wire ripple effect on all [data-ripple] buttons ──────────────────────
+    document.querySelectorAll('[data-ripple]').forEach(btn => UI.addRipple(btn));
+
+
     // 1. File Upload UI interactions
     const uploadZone = document.getElementById('upload-zone');
     const fileInput = document.getElementById('csv-upload');
@@ -11,35 +235,53 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnViewSample = document.getElementById('btn-view-sample');
     if (btnViewSample) {
         btnViewSample.addEventListener('click', async () => {
-            btnViewSample.disabled = true;
-            const originalHtml = btnViewSample.innerHTML;
-            btnViewSample.innerHTML = '<i class="ph ph-spinner-gap animate-spin text-lg"></i> Loading...';
-            
+            if (isUploadProcessing) return;
+            isUploadProcessing = true;
+            UI.setButtonLoading(btnViewSample, true, 'Loading...');
+
             try {
                 const response = await fetch('/api/load-sample', { method: 'POST' });
                 const result = await response.json();
-                
+
                 if (response.ok && result.success) {
                     window.currentFileId = result.file_id;
+                    sessionStorage.setItem('currentFileId', result.file_id);
+                    sessionStorage.setItem('currentFileName', result.filename || 'sample_sales_data.csv');
+                    sessionStorage.setItem('currentFileRows', result.summary.total_rows);
+                    sessionStorage.setItem('currentFileCols', result.summary.total_columns);
+                    sessionStorage.setItem('uploadTimestamp', Date.now());
+                    // Persist dashboard data for cross-navigation restoration
+                    sessionStorage.setItem('dashboardSummary', JSON.stringify(result.summary));
+                    sessionStorage.setItem('dashboardPreview', JSON.stringify(result.preview));
+                    // Clear stale chart/analysis/chat from a previous dataset
+                    ['dashboardAnalysis','chartPath','chartType','chartExplanation',
+                     'chartTimestamp','chartTimestampLabel','chatHistory','aiInsightsResult'].forEach(k => sessionStorage.removeItem(k));
+
                     updateDashboard(result.summary, result.preview);
                     fileNameDisplay.textContent = result.filename || 'sample_sales_data.csv';
                     filePreview.classList.remove('hidden');
                     resetChartState();
-                    
+
+                    updateFooterStatus(result.filename || 'sample_sales_data.csv', result.summary.total_rows, result.summary.total_columns);
+
+                    // Show generate chart button
+                    const btnChart = document.getElementById('btn-generate-chart');
+                    if (btnChart) { btnChart.classList.remove('hidden'); btnChart.classList.add('revealed'); }
+
                     if (typeof SessionManager !== 'undefined') {
                         SessionManager.saveDataset(result.file_id, result.filename || 'sample_sales_data.csv', result.summary.total_rows, result.summary.total_columns);
                     }
-                    
+
                     UI.showAlert('Sample dataset loaded successfully.', 'success');
                     fetchAnalysis(result.file_id);
                 } else {
-                    UI.showAlert(result.message || 'Could not load sample dataset.', 'error');
+                    UI.showAlert(UI.friendlyError(result.message) || 'Could not load sample dataset.', 'error');
                 }
             } catch (e) {
-                UI.showAlert('Network error loading sample.', 'error');
+                UI.showAlert(UI.friendlyError(e.message || e), 'error');
             } finally {
-                btnViewSample.disabled = false;
-                btnViewSample.innerHTML = originalHtml;
+                UI.setButtonLoading(btnViewSample, false);
+                isUploadProcessing = false;
             }
         });
     }
@@ -48,20 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnUploadNew = document.getElementById('btn-upload-new');
     if (btnUploadNew) {
         btnUploadNew.addEventListener('click', () => {
-            // Full state reset
-            window.currentFileId = null;
-            resetUploadUI();
-            resetChartState();
-            resetAnalysisUI();
-            
-            // Clear chat history, keep only the welcome message
-            const chatHistory = document.getElementById('chat-history-area');
-            if (chatHistory) {
-                // Remove everything except first child (welcome message)
-                while (chatHistory.children.length > 2) {
-                    chatHistory.removeChild(chatHistory.lastChild);
-                }
-            }
+            // Full session & UI reset
+            clearSessionAndResetUI();
             
             // Open file picker
             if (fileInput) {
@@ -126,6 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function uploadFile(file) {
+        if (isUploadProcessing) return;
+        isUploadProcessing = true;
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -143,34 +376,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                UI.showAlert(result.message, 'success');
+                UI.showAlert('Dataset uploaded successfully!', 'success');
                 updateDashboard(result.summary, result.preview);
 
                 // Store file_id globally for next phases
                 window.currentFileId = result.file_id;
-                
+                sessionStorage.setItem('currentFileId', result.file_id);
+                sessionStorage.setItem('currentFileName', file.name);
+                sessionStorage.setItem('currentFileRows', result.summary.total_rows);
+                sessionStorage.setItem('currentFileCols', result.summary.total_columns);
+                sessionStorage.setItem('uploadTimestamp', Date.now());
+                // Persist dashboard data for cross-navigation restoration
+                sessionStorage.setItem('dashboardSummary', JSON.stringify(result.summary));
+                sessionStorage.setItem('dashboardPreview', JSON.stringify(result.preview));
+                // Clear stale chart/analysis/chat from a previous dataset
+                ['dashboardAnalysis','chartPath','chartType','chartExplanation',
+                 'chartTimestamp','chartTimestampLabel','chatHistory','aiInsightsResult'].forEach(k => sessionStorage.removeItem(k));
+
+                updateFooterStatus(file.name, result.summary.total_rows, result.summary.total_columns);
+
+                // Show generate chart button
+                const btnChart = document.getElementById('btn-generate-chart');
+                if (btnChart) { btnChart.classList.remove('hidden'); btnChart.classList.add('revealed'); }
+
                 // Phase 7: Track in Session History
                 if (typeof SessionManager !== 'undefined') {
                     SessionManager.saveDataset(result.file_id, file.name, result.summary.total_rows, result.summary.total_columns);
                 }
 
                 // Phase 4: Trigger Intelligent Analysis
-                UI.showAlert('Analyzing dataset patterns...', 'info');
+                UI.showAlert('Analyzing dataset patterns…', 'info');
                 fetchAnalysis(result.file_id);
-                
+
                 // Phase 6: Fully reset & re-enable Generate Chart button for this new dataset
                 resetChartState();
+
+                // Re-show generate chart after reset
+                if (btnChart) { btnChart.classList.remove('hidden'); btnChart.classList.add('revealed'); }
             } else {
-                UI.showAlert(result.message || 'Error processing file', 'error');
+                UI.showAlert(UI.friendlyError(result.message) || 'Error processing file', 'error');
                 resetUploadUI();
             }
         } catch (error) {
-            UI.showAlert('Network error. Please try again.', 'error');
+            UI.showAlert(UI.friendlyError(error.message || error), 'error');
             resetUploadUI();
         } finally {
             uploadProgress.classList.add('hidden');
             fileInput.disabled = false;
             browseLabel.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+            isUploadProcessing = false;
         }
     }
 
@@ -216,6 +470,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (info)     { info.classList.add('hidden'); }
         if (bars)     { bars.classList.remove('hidden'); }
         if (loader)   { loader.classList.add('hidden'); }
+
+        // Clear persisted chart state so it is not restored after a reset
+        ['chartPath','chartType','chartExplanation','chartTimestamp','chartTimestampLabel'].forEach(k => sessionStorage.removeItem(k));
     }
 
     function updateDashboard(summary, preview) {
@@ -265,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeFileBtn = filePreview?.querySelector('button');
     if (removeFileBtn) {
         removeFileBtn.addEventListener('click', () => {
-            resetUploadUI();
+            clearSessionAndResetUI();
             UI.showAlert('File removed.', 'info');
         });
     }
@@ -292,16 +549,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!chatInput) return;
         const question = chatInput.value.trim();
         if (!question) return;
-        
+
         if (!window.currentFileId) {
             UI.showAlert('Please upload a dataset first.', 'warning');
             return;
         }
 
+        if (isChatProcessing) return;
+        isChatProcessing = true;
+
+        // Hide empty state on first real message
+        const chatEmptyState = document.getElementById('chat-empty-state');
+        if (chatEmptyState) chatEmptyState.classList.add('hidden');
+
         // Add user message to UI
         appendUserMessage(question);
         chatInput.value = '';
-        
+
+        // Disable input & send button while processing
+        chatInput.disabled = true;
+        const sendBtn = chatForm?.querySelector('button[type="button"]');
+        if (sendBtn) { sendBtn.disabled = true; sendBtn.classList.add('opacity-50'); }
+
         // Show typing indicator
         if (typingIndicator) {
             typingIndicator.classList.remove('hidden');
@@ -319,36 +588,38 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const result = await response.json();
-            
-            if (typingIndicator) {
-                typingIndicator.classList.add('hidden');
-            }
+
+            if (typingIndicator) typingIndicator.classList.add('hidden');
 
             if (response.ok) {
-                appendBotMessage(result.answer, result.confidence, result.suggestions);
+                appendBotMessage(result.answer, result.confidence, result.suggestions, result.confidence_label);
                 // Track question in Session History
                 if (typeof SessionManager !== 'undefined') {
                     SessionManager.incrementQuestions(window.currentFileId);
                 }
             } else {
-                appendBotMessage(result.answer || 'Error processing question.', 0);
+                appendBotMessage(UI.friendlyError(result.answer || result.message || 'Error processing question.'), 0);
             }
         } catch (error) {
-            if (typingIndicator) {
-                typingIndicator.classList.add('hidden');
-            }
-            appendBotMessage('Network error. Unable to reach the question engine.', 0);
+            if (typingIndicator) typingIndicator.classList.add('hidden');
+            appendBotMessage(UI.friendlyError(error.message || 'network'), 0);
+        } finally {
+            isChatProcessing = false;
+            chatInput.disabled = false;
+            if (sendBtn) { sendBtn.disabled = false; sendBtn.classList.remove('opacity-50'); }
+            chatInput.focus();
         }
     }
 
     function appendUserMessage(text) {
+        const escapedText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const msgHtml = `
-            <div class="flex gap-3 flex-row-reverse">
-                <div class="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center">
-                    <i class="ph ph-user text-white"></i>
+            <div class="flex gap-3 flex-row-reverse mb-4">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-indigo-600 flex-shrink-0 flex items-center justify-center shadow border border-primary/20">
+                    <i class="ph ph-user text-white text-base"></i>
                 </div>
-                <div class="bg-primary/20 border border-primary/30 rounded-2xl rounded-tr-sm p-3 text-sm text-white max-w-[90%]">
-                    ${text}
+                <div class="bg-primary/25 border border-primary/30 rounded-2xl rounded-tr-sm p-3.5 text-sm text-slate-100 max-w-[80%] shadow-sm leading-relaxed">
+                    ${escapedText}
                 </div>
             </div>
         `;
@@ -358,34 +629,54 @@ document.addEventListener('DOMContentLoaded', () => {
             chatHistory.insertAdjacentHTML('beforeend', msgHtml);
         }
         scrollToBottom();
+        saveChatHistory();
     }
-
-    function appendBotMessage(text, confidence = null, suggestions = null) {
+    function appendBotMessage(text, confidence = null, suggestions = null, confidenceLabel = null) {
         let confHtml = '';
         if (confidence !== null && confidence > 0) {
+            let engineName = confidenceLabel || "Rule-based Engine";
             let confColor = confidence > 80 ? 'text-emerald-400' : (confidence > 50 ? 'text-yellow-400' : 'text-orange-400');
-            confHtml = '<p class="text-xs ' + confColor + ' mt-2 font-medium"><i class="ph ph-check-circle"></i> ' + confidence + '% confidence match (Rule-based Engine)</p>';
+            confHtml = `<p class="text-xs ${confColor} mt-2.5 font-medium flex items-center gap-1"><i class="ph ph-check-circle"></i> ${confidence}% confidence match (${engineName})</p>`;
         }
         
         let suggHtml = '';
         if (suggestions && suggestions.length > 0) {
-            suggHtml = '<ul class="list-disc pl-5 mt-2 text-primary">';
+            suggHtml = '<ul class="list-disc pl-5 mt-2 text-primary space-y-1">';
             suggestions.forEach(s => {
                 suggHtml += '<li>' + s + '</li>';
             });
             suggHtml += '</ul>';
         }
 
+        // Render Markdown Response
+        let renderedText = text;
+        if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+            try {
+                renderedText = marked.parse(text);
+            } catch (e) {
+                console.error("Marked parsing error:", e);
+            }
+        } else {
+            renderedText = text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code class="bg-dark-bg px-1 rounded">$1</code>');
+        }
+
         const msgHtml = `
-            <div class="flex gap-3">
-                <div class="w-8 h-8 rounded-full bg-dark-border flex-shrink-0 flex items-center justify-center mt-1">
-                    <i class="ph ph-robot text-slate-300"></i>
+            <div class="flex gap-3 mb-4">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-dark-border to-slate-700 flex-shrink-0 flex items-center justify-center border border-dark-border mt-1 shadow">
+                    <i class="ph ph-robot text-accent text-base"></i>
                 </div>
-                <div class="bg-dark-bg/80 border border-dark-border rounded-2xl rounded-tl-sm p-4 text-sm text-slate-300 max-w-[90%] shadow-sm">
-                    <p>${text}</p>
+                <div class="bg-dark-bg/85 border border-dark-border rounded-2xl rounded-tl-sm p-4 text-sm text-slate-200 max-w-[80%] shadow-lg leading-relaxed markdown-body">
+                    <div class="space-y-2">${renderedText}</div>
                     ${suggHtml}
                     ${confHtml}
-                    <p class="text-[10px] text-slate-500 mt-1">${new Date().toLocaleTimeString()}</p>
+                    <div class="flex justify-between items-center mt-3 pt-2 border-t border-dark-border/40 text-[10px] text-slate-500">
+                        <span>${new Date().toLocaleTimeString()}</span>
+                        <span class="flex items-center gap-0.5"><i class="ph ph-sparkle text-accent text-[9px]"></i> AI Response</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -396,6 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chatHistory.insertAdjacentHTML('beforeend', msgHtml);
         }
         scrollToBottom();
+        saveChatHistory();
     }
 
     function scrollToBottom() {
@@ -404,17 +696,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // QA Suggestion Buttons Logic
-    // More reliable: target all rounded-full suggestion buttons directly
-    const suggestionButtons = document.querySelectorAll('button.rounded-full.text-left');
-    suggestionButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            if (chatInput) {
-                chatInput.value = e.currentTarget.innerText.trim();
-                handleChatSubmit();
-            }
-        });
-    });
+    // QA Suggestions populator
+    function populateSuggestedQuestions(questions) {
+        const container = document.getElementById('qa-suggestions-container');
+        const chipsArea = document.getElementById('qa-suggestions-chips');
+        if (!container || !chipsArea) return;
+
+        chipsArea.innerHTML = '';
+        if (questions && questions.length > 0) {
+            questions.forEach(q => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'text-xs bg-dark-bg hover:bg-dark-border border border-dark-border text-slate-300 hover:text-white px-3 py-2 rounded-full transition-all text-left truncate max-w-full duration-150 hover:-translate-y-0.5';
+                btn.textContent = q;
+                btn.setAttribute('data-ripple', '1');
+                if (typeof UI !== 'undefined' && typeof UI.addRipple === 'function') {
+                    UI.addRipple(btn);
+                }
+                btn.addEventListener('click', () => {
+                    if (chatInput) {
+                        chatInput.value = q;
+                        handleChatSubmit();
+                    }
+                });
+                chipsArea.appendChild(btn);
+            });
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
+    }
 
     async function fetchAnalysis(fileId) {
         try {
@@ -426,13 +737,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (response.ok && result.success) {
                 populateAnalysisPanels(result.analysis);
-                UI.showAlert('Analysis complete!', 'success');
+                // Cache analysis for restoration after navigation
+                sessionStorage.setItem('dashboardAnalysis', JSON.stringify(result.analysis));
+                
+                // Cache and populate suggested questions
+                if (result.suggested_questions) {
+                    populateSuggestedQuestions(result.suggested_questions);
+                    sessionStorage.setItem('suggestedQuestions', JSON.stringify(result.suggested_questions));
+                }
+                
+                UI.showAlert('Analysis complete! Insights ready.', 'success');
             } else {
-                UI.showAlert(result.message || 'Error generating analysis', 'warning');
+                UI.showAlert(UI.friendlyError(result.message) || 'Error generating analysis', 'warning');
             }
         } catch (error) {
-            console.error("Analysis error:", error);
-            UI.showAlert('Error communicating with analysis engine.', 'error');
+            console.error('Analysis error:', error);
+            UI.showAlert(UI.friendlyError(error.message || 'analysis failed'), 'warning');
         }
     }
 
@@ -513,12 +833,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 UI.showAlert('Please upload a dataset first.', 'warning');
                 return;
             }
+            if (isChartProcessing) return;
+            isChartProcessing = true;
 
             // UI Loading state
-            btnGenerateChart.disabled = true;
-            btnGenerateChart.classList.add('opacity-50', 'cursor-not-allowed');
+            UI.setButtonLoading(btnGenerateChart, true, 'Generating…');
             chartLoader.classList.remove('hidden');
-            
+
             try {
                 const response = await fetch('/api/generate-chart', {
                     method: 'POST',
@@ -527,56 +848,173 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const result = await response.json();
-                
+
                 if (response.ok && result.success) {
-                    // Update image with cache busting
-                    generatedChartImg.src = result.chart_path + '?t=' + new Date().getTime(); 
-                    
+                    const ts = new Date().getTime();
+                    const tsLabel = 'Generated at ' + new Date().toLocaleTimeString();
+                    generatedChartImg.src = result.chart_path + '?t=' + ts;
+
                     generatedChartImg.onload = () => {
                         chartLoader.classList.add('hidden');
                         chartPlaceholderBars.classList.add('hidden');
                         generatedChartImg.classList.remove('hidden');
-                        
-                        // Update info panel
+
                         chartTypeBadge.textContent = result.chart_type;
                         chartExplanation.textContent = result.explanation;
-                        chartTimestamp.textContent = 'Generated at ' + new Date().toLocaleTimeString();
+                        chartTimestamp.textContent = tsLabel;
                         chartInfo.classList.remove('hidden');
-                        
-                        // Setup download button
+
                         btnDownloadChart.href = result.chart_path;
                         btnDownloadChart.classList.remove('hidden');
-                        btnDownloadChart.classList.add('flex'); // override hidden flex conflict
-                        
-                        // Hide generate button after generation
+                        btnDownloadChart.classList.add('flex');
+
                         btnGenerateChart.classList.add('hidden');
-                        
-                        // Track chart generation in Session History
+                        UI.setButtonLoading(btnGenerateChart, false);
+
+                        // Persist chart state for cross-navigation restoration
+                        sessionStorage.setItem('chartPath', result.chart_path);
+                        sessionStorage.setItem('chartType', result.chart_type);
+                        sessionStorage.setItem('chartExplanation', result.explanation);
+                        sessionStorage.setItem('chartTimestamp', ts);
+                        sessionStorage.setItem('chartTimestampLabel', tsLabel);
+
                         if (typeof SessionManager !== 'undefined') {
                             SessionManager.incrementCharts(window.currentFileId);
                         }
 
                         UI.showAlert('Visualization generated successfully!', 'success');
                     };
-                    
+
                     generatedChartImg.onerror = () => {
                         chartLoader.classList.add('hidden');
-                        UI.showAlert('Failed to load chart image.', 'error');
-                        btnGenerateChart.disabled = false;
-                        btnGenerateChart.classList.remove('opacity-50', 'cursor-not-allowed');
-                    }
+                        UI.showAlert('Failed to load chart image. Please try again.', 'error');
+                        UI.setButtonLoading(btnGenerateChart, false);
+                        isChartProcessing = false;
+                    };
                 } else {
                     chartLoader.classList.add('hidden');
-                    UI.showAlert(result.message || 'Error generating chart.', 'error');
-                    btnGenerateChart.disabled = false;
-                    btnGenerateChart.classList.remove('opacity-50', 'cursor-not-allowed');
+                    UI.showAlert(UI.friendlyError(result.message) || 'Error generating chart.', 'error');
+                    UI.setButtonLoading(btnGenerateChart, false);
+                    isChartProcessing = false;
                 }
             } catch (error) {
-                console.error("Chart generation error:", error);
+                console.error('Chart generation error:', error);
                 chartLoader.classList.add('hidden');
-                UI.showAlert('Network error while generating chart.', 'error');
-                btnGenerateChart.disabled = false;
-                btnGenerateChart.classList.remove('opacity-50', 'cursor-not-allowed');
+                UI.showAlert(UI.friendlyError(error.message || error), 'error');
+                UI.setButtonLoading(btnGenerateChart, false);
+                isChartProcessing = false;
+            }
+        });
+    }
+
+    // ── AI Insights Page Scripting ──────────────────────────────────────────
+    const btnGenInsights = document.getElementById('btn-generate-insights');
+    if (btnGenInsights) {
+        const fileId = sessionStorage.getItem('currentFileId');
+        const fileName = sessionStorage.getItem('currentFileName');
+        const fileRows = sessionStorage.getItem('currentFileRows');
+        const fileCols = sessionStorage.getItem('currentFileCols');
+
+        const noDatasetWarning = document.getElementById('no-dataset-warning');
+        const activeDatasetCard = document.getElementById('active-dataset-card');
+        const insightsLoader = document.getElementById('insights-loader');
+        const insightsResultContainer = document.getElementById('insights-result-container');
+
+        const populateList = (listId, items) => {
+            const list = document.getElementById(listId);
+            if (!list) return;
+            list.innerHTML = '';
+            if (items && items.length > 0) {
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start gap-2 animate-fade-in';
+                    let iconColor = 'text-primary';
+                    let iconName = 'ph-check-circle';
+                    if (listId === 'insight-findings') {
+                        iconColor = 'text-emerald-400';
+                        iconName = 'ph-chart-line-up';
+                    } else if (listId === 'insight-risks') {
+                        iconColor = 'text-orange-400';
+                        iconName = 'ph-warning-octagon';
+                    } else if (listId === 'insight-recommendations') {
+                        iconColor = 'text-accent';
+                        iconName = 'ph-lightbulb-filament';
+                    }
+                    li.innerHTML = `<i class="ph ${iconName} ${iconColor} mt-1 flex-shrink-0"></i> <span>${item}</span>`;
+                    list.appendChild(li);
+                });
+            } else {
+                list.innerHTML = '<li>No items to display.</li>';
+            }
+        };
+
+        function renderInsights(data) {
+            const execSummary = document.getElementById('insight-exec-summary');
+            const explanation = document.getElementById('insight-explanation');
+            if (execSummary) execSummary.textContent = data.executive_summary || '';
+            populateList('insight-findings', data.key_findings);
+            populateList('insight-risks', data.potential_risks);
+            populateList('insight-recommendations', data.recommendations);
+            if (explanation) explanation.textContent = data.plain_english_explanation || '';
+            if (insightsResultContainer) insightsResultContainer.classList.remove('hidden');
+        }
+
+        if (!fileId) {
+            if (noDatasetWarning) noDatasetWarning.classList.remove('hidden');
+            if (activeDatasetCard) activeDatasetCard.classList.add('hidden');
+        } else {
+            const datasetNameEl = document.getElementById('dataset-name');
+            const datasetRowsEl = document.getElementById('dataset-rows');
+            const datasetColsEl = document.getElementById('dataset-cols');
+            if (datasetNameEl) datasetNameEl.textContent = fileName || 'dataset.csv';
+            if (datasetRowsEl) datasetRowsEl.textContent = Number(fileRows).toLocaleString() || '0';
+            if (datasetColsEl) datasetColsEl.textContent = Number(fileCols).toLocaleString() || '0';
+            if (activeDatasetCard) activeDatasetCard.classList.remove('hidden');
+            if (noDatasetWarning) noDatasetWarning.classList.add('hidden');
+
+            // Restore cached AI Insights without re-fetching
+            const cachedInsights = sessionStorage.getItem('aiInsightsResult');
+            if (cachedInsights) {
+                try {
+                    renderInsights(JSON.parse(cachedInsights));
+                } catch(e) { console.warn('Could not restore cached insights', e); }
+            }
+        }
+
+        btnGenInsights.addEventListener('click', async () => {
+            if (!fileId) {
+                UI.showAlert('Please upload a dataset first.', 'warning');
+                return;
+            }
+            btnGenInsights.disabled = true;
+            btnGenInsights.classList.add('opacity-50', 'cursor-not-allowed');
+            if (insightsLoader) insightsLoader.classList.remove('hidden');
+            if (insightsResultContainer) insightsResultContainer.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/ai-insights', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file_id: fileId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    const data = result.insights;
+                    renderInsights(data);
+                    // Cache insights for restoration after navigation
+                    sessionStorage.setItem('aiInsightsResult', JSON.stringify(data));
+                    UI.showAlert('AI Insights generated successfully!', 'success');
+                } else {
+                    UI.showAlert(result.message || 'Failed to generate AI insights.', 'error');
+                }
+            } catch (e) {
+                UI.showAlert('Network error generating AI insights.', 'error');
+            } finally {
+                if (insightsLoader) insightsLoader.classList.add('hidden');
+                btnGenInsights.disabled = false;
+                btnGenInsights.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         });
     }

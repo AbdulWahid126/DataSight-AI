@@ -1,11 +1,12 @@
 /**
- * SessionManager 
- * Handles browser-based local storage for history and settings
+ * SessionManager - Phase 8 Production Polish
+ * Handles temporary browser state (sessionStorage) for history, and
+ * permanent browser state (localStorage) for harmless UI preferences only.
  */
 const SessionManager = {
     init() {
-        if (!localStorage.getItem('dataSightHistory')) {
-            localStorage.setItem('dataSightHistory', JSON.stringify([]));
+        if (!sessionStorage.getItem('dataSightHistory')) {
+            sessionStorage.setItem('dataSightHistory', JSON.stringify([]));
         }
         if (!localStorage.getItem('dataSightSettings')) {
             localStorage.setItem('dataSightSettings', JSON.stringify({
@@ -18,7 +19,7 @@ const SessionManager = {
 
     getHistory() {
         this.init();
-        return JSON.parse(localStorage.getItem('dataSightHistory'));
+        return JSON.parse(sessionStorage.getItem('dataSightHistory'));
     },
 
     getSettings() {
@@ -49,7 +50,7 @@ const SessionManager = {
                 charts: 0
             });
         }
-        localStorage.setItem('dataSightHistory', JSON.stringify(history));
+        sessionStorage.setItem('dataSightHistory', JSON.stringify(history));
     },
 
     incrementQuestions(fileId) {
@@ -58,7 +59,7 @@ const SessionManager = {
         const existing = history.find(h => h.id === fileId);
         if (existing) {
             existing.questions += 1;
-            localStorage.setItem('dataSightHistory', JSON.stringify(history));
+            sessionStorage.setItem('dataSightHistory', JSON.stringify(history));
         }
     },
 
@@ -68,18 +69,32 @@ const SessionManager = {
         const existing = history.find(h => h.id === fileId);
         if (existing) {
             existing.charts += 1;
-            localStorage.setItem('dataSightHistory', JSON.stringify(history));
+            sessionStorage.setItem('dataSightHistory', JSON.stringify(history));
         }
     },
 
     clearHistory() {
-        localStorage.setItem('dataSightHistory', JSON.stringify([]));
+        sessionStorage.setItem('dataSightHistory', JSON.stringify([]));
     },
     
     resetApplication() {
-        localStorage.removeItem('dataSightHistory');
+        // Clear history in sessionStorage
+        sessionStorage.removeItem('dataSightHistory');
+        // Clear all temporary sessionStorage cache
+        const keysToClear = [
+            'currentFileId', 'currentFileName', 'currentFileRows', 'currentFileCols',
+            'dashboardSummary', 'dashboardPreview', 'dashboardAnalysis',
+            'chartPath', 'chartType', 'chartExplanation', 'chartTimestamp', 'chartTimestampLabel',
+            'chatHistory', 'aiInsightsResult', 'uploadTimestamp'
+        ];
+        keysToClear.forEach(k => sessionStorage.removeItem(k));
+        
+        // Reset default settings
         localStorage.removeItem('dataSightSettings');
         this.init();
+
+        // Clear server session asynchronously
+        fetch('/api/clear-session', { method: 'POST' }).catch(err => console.error(err));
     }
 };
 

@@ -223,7 +223,10 @@ document.getElementById('modal-confirm-btn').addEventListener('click', () => {
         UI.showAlert('History cleared successfully.', 'success');
     } else if (currentAction === 'resetApp') {
         SessionManager.resetApplication();
-        UI.showAlert('Application reset successfully.', 'success');
+        UI.showAlert('Application reset successfully. Redirecting...', 'success');
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 1000);
     }
     closeModal();
 });

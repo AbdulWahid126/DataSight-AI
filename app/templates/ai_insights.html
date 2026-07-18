@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}AI Insights | DataSight AI{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="mb-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-extrabold tracking-tight mb-2 flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+                    <i class="ph ph-lightbulb-filament text-white text-2xl"></i>
+                </div>
+                AI Insights
+            </h1>
+            <p class="text-slate-400 text-lg max-w-2xl">
+                Get a deep, structured, Gemini-powered analysis explaining what your data means.
+            </p>
+        </div>
+    </div>
+
+    <!-- Empty State / Warning if no dataset loaded -->
+    <div id="no-dataset-warning" class="hidden flex flex-col items-center justify-center py-20 glass-card rounded-2xl border border-dark-border text-center">
+        <div class="w-20 h-20 rounded-full bg-dark-bg/80 flex items-center justify-center mb-6 border border-dark-border shadow-inner">
+            <i class="ph ph-warning-octagon text-4xl text-orange-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-white mb-2">No active dataset selected</h3>
+        <p class="text-slate-400 max-w-md mb-6">Please upload a CSV dataset on the Dashboard before generating insights.</p>
+        <a href="{{ url_for('views.index') }}" class="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-primary-glow flex items-center gap-2">
+            <i class="ph ph-arrow-left"></i> Go to Dashboard
+        </a>
+    </div>
+
+    <!-- Active Dataset Details & Generate Button -->
+    <div id="active-dataset-card" class="hidden glass-card rounded-2xl p-6 border border-dark-border mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <i class="ph ph-file-csv text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-white text-lg" id="dataset-name">dataset.csv</h3>
+                <p class="text-sm text-slate-400">
+                    Active Dataset: <span id="dataset-rows">0</span> rows &bull; <span id="dataset-cols">0</span> columns
+                </p>
+            </div>
+        </div>
+        <div>
+            <button id="btn-generate-insights" class="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-semibold shadow-primary-glow transition-all flex items-center gap-2">
+                <i class="ph ph-sparkle text-lg animate-pulse"></i> Generate AI Insights
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="insights-loader" class="hidden flex flex-col items-center justify-center py-20 glass-card rounded-2xl border border-dark-border text-center">
+        <div class="relative w-20 h-20 mb-6">
+            <div class="absolute inset-0 rounded-full border-4 border-primary/20 animate-pulse"></div>
+            <div class="absolute inset-0 rounded-full border-4 border-t-primary animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i class="ph ph-sparkle text-2xl text-primary animate-ping"></i>
+            </div>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2 animate-pulse">Analyzing with Gemini AI</h3>
+        <p class="text-slate-400 max-w-sm">Generating executive summary, recommendations, and risks. This may take a few seconds...</p>
+    </div>
+
+    <!-- Insights Results Grid -->
+    <div id="insights-result-container" class="hidden space-y-8">
+        
+        <!-- Executive Summary -->
+        <section class="glass-card rounded-2xl border border-primary/30 p-6 md:p-8 relative overflow-hidden shadow-primary-glow">
+            <div class="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-primary to-accent"></div>
+            <h3 class="font-bold text-xl text-white flex items-center gap-2 mb-4">
+                <i class="ph ph-article text-primary"></i> Executive Summary
+            </h3>
+            <p id="insight-exec-summary" class="text-slate-300 leading-relaxed text-base"></p>
+        </section>
+
+        <!-- Key Findings & Potential Risks Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Key Findings -->
+            <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2 mb-4 border-b border-dark-border pb-3">
+                    <i class="ph ph-chart-line-up text-emerald-400"></i> Key Findings
+                </h3>
+                <ul id="insight-findings" class="space-y-3 text-sm text-slate-300">
+                    <!-- Dynamic bullet items -->
+                </ul>
+            </section>
+
+            <!-- Potential Risks -->
+            <section class="glass-card rounded-2xl border border-dark-border p-6 shadow-glass">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2 mb-4 border-b border-dark-border pb-3">
+                    <i class="ph ph-warning-octagon text-orange-400"></i> Potential Risks & Outliers
+                </h3>
+                <ul id="insight-risks" class="space-y-3 text-sm text-slate-300">
+                    <!-- Dynamic bullet items -->
+                </ul>
+            </section>
+        </div>
+
+        <!-- Recommendations -->
+        <section class="glass-card rounded-2xl border border-dark-border p-6 md:p-8 shadow-glass">
+            <h3 class="font-bold text-lg text-white flex items-center gap-2 mb-4 border-b border-dark-border pb-3">
+                <i class="ph ph-clipboard-text text-accent"></i> Strategic Recommendations
+            </h3>
+            <ul id="insight-recommendations" class="space-y-4 text-sm text-slate-300">
+                <!-- Dynamic items -->
+            </ul>
+        </section>
+
+        <!-- Plain-English Explanation -->
+        <section class="glass-card rounded-2xl border border-dark-border p-6 md:p-8 shadow-glass">
+            <h3 class="font-bold text-lg text-white flex items-center gap-2 mb-4 border-b border-dark-border pb-3">
+                <i class="ph ph-chats-teardrop text-purple-400"></i> Plain-English Explanation
+            </h3>
+            <p id="insight-explanation" class="text-slate-300 leading-relaxed text-base"></p>
+        </section>
+    </div>
+</div>
+{% endblock %}
